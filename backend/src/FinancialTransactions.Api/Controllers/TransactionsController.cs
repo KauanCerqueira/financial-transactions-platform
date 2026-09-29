@@ -3,6 +3,7 @@ using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Application.Features.Transactions;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 namespace FinancialTransactions.Api.Controllers;
 
@@ -14,6 +15,7 @@ public sealed class TransactionsController(IProcessTransactionUseCase processTra
     [SwaggerOperation(
         Summary = "Processa um evento financeiro",
         Description = "Recebe um crédito ou débito. É idempotente pelo eventId: repetir o mesmo evento devolve o lançamento já processado, sem movimentar o saldo de novo.")]
+    [SwaggerRequestExample(typeof(ProcessTransactionRequest), typeof(ProcessTransactionRequestExample))]
     [SwaggerResponse(StatusCodes.Status201Created, "Evento processado e saldo atualizado.", typeof(TransactionDto))]
     [SwaggerResponse(StatusCodes.Status200OK, "Evento já processado anteriormente (idempotência).", typeof(TransactionDto))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Payload inválido: tipo, valor ou data.")]

@@ -1,11 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FinancialTransactions.Api.Contracts;
 using FinancialTransactions.Api.Errors;
 using FinancialTransactions.Api.Startup;
 using FinancialTransactions.Application;
 using FinancialTransactions.Infrastructure;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +40,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.EnableAnnotations();
+    options.ExampleFilters();
 });
+builder.Services.AddSwaggerExamplesFromAssemblyOf<ProcessTransactionRequestExample>();
 
 var app = builder.Build();
 
