@@ -20,6 +20,7 @@ public sealed class Money : IEquatable<Money>, IComparable<Money>
             throw new DomainException("O valor monetário não pode ser negativo.");
         }
 
+        // arredondamento bancário: metade para o par
         return new Money(Math.Round(amount, Scale, MidpointRounding.ToEven));
     }
 

@@ -29,6 +29,7 @@ public static class DatabaseSeeder
         foreach (var seedAccount in SeedAccounts)
         {
             var account = Account.Create(seedAccount.AccountId, seedAccount.HolderName, Money.Zero, now);
+            // saldo inicial entra como crédito para o saldo bater com o histórico
             account.RegisterTransaction(seedAccount.EventId, TransactionType.Credit, Money.Create(seedAccount.InitialAmount), now, now);
 
             await dbContext.Accounts.AddAsync(account, cancellationToken);

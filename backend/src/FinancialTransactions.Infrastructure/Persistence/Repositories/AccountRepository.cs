@@ -19,6 +19,7 @@ public sealed class AccountRepository(AppDbContext dbContext) : IAccountReposito
 
     public async Task<Account?> GetByIdWithLockAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
+        // ToListAsync mantém o FOR UPDATE; encadear FirstOrDefaultAsync o embrulharia em subquery e perderia a trava
         var lockedAccounts = await dbContext.Accounts
             .FromSql($"SELECT * FROM accounts WHERE id = {accountId} FOR UPDATE")
             .ToListAsync(cancellationToken);

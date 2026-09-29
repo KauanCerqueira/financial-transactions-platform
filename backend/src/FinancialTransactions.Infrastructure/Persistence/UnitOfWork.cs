@@ -15,6 +15,7 @@ public sealed class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
         }
         catch (DbUpdateException exception) when (IsUniqueViolation(exception))
         {
+            // o índice único em event_id é o que garante a idempotência
             throw new DuplicateEventException(exception);
         }
     }
