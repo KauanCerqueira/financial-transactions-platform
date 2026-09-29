@@ -216,10 +216,5 @@ frontend/
 ├─ scripts/     geração dos prints do README
 └─ src/app/     core, shared e features (contas, extrato e transações)
 infra/keycloak/ realm, tema de login (themes/fraga) e usuário de demonstração
-docs/prints/    imagens usadas neste README
+docs/           prints usados neste README e o enunciado do desafio
 ```
-
-## Próximos passos
-
-- Exportar o extrato em CSV e busca com atalho de teclado (`Ctrl K`).
-- Escalar o worker de forma independente da API em produção.
