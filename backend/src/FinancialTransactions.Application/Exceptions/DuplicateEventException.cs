@@ -2,11 +2,8 @@ namespace FinancialTransactions.Application.Exceptions;
 
 public sealed class DuplicateEventException : Exception
 {
-    public Guid EventId { get; }
-
-    public DuplicateEventException(Guid eventId)
-        : base($"O evento {eventId} já foi processado.")
+    public DuplicateEventException(Exception innerException)
+        : base("O evento já foi processado (violação de unicidade).", innerException)
     {
-        EventId = eventId;
     }
 }
