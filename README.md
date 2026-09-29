@@ -137,14 +137,16 @@ cd frontend
 npm ci
 npm test -- --watch=false
 npm run build
+npm run e2e
 ```
 
-Hoje são **48 testes no backend** (unitários e de integração) e **38 no frontend**. Os testes de integração usam Testcontainers e precisam do Docker em execução. O frontend pode ser iniciado fora do Compose com `npm start` na pasta `frontend`; a configuração de desenvolvimento encaminha `/api` para `localhost:8080`. A aplicação completa é iniciada com o Compose acima.
+Hoje são **49 testes no backend** (unitários e de integração), **38 no frontend** (Vitest) e **6 ponta a ponta** (Playwright: login, contas, extrato com filtros, aba de informações, lançamento com sucesso e rejeição). Os testes de integração usam Testcontainers e precisam do Docker em execução. Os testes e2e precisam da aplicação no ar (`docker compose up`) e do Chromium do Playwright (`npx playwright install chromium`).
+
+O frontend pode ser iniciado fora do Compose com `npm start` na pasta `frontend`; a configuração de desenvolvimento encaminha `/api` para `localhost:8080`. A aplicação completa é iniciada com o Compose acima.
 
 Os testes cobrem regras do domínio, idempotência, saldo insuficiente, recuperação de evento pendente, concorrência no banco, contratos HTTP, validação do formulário e estados do frontend.
 
 ## Próximos passos
 
 - Exportar o extrato em CSV e busca com atalho de teclado (`Ctrl K`).
-- Testes ponta a ponta (Playwright) cobrindo login, lançamento e extrato.
 - Escalar o worker de forma independente da API em produção.
