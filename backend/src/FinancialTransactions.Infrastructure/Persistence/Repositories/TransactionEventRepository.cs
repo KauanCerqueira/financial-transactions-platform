@@ -11,4 +11,16 @@ public sealed class TransactionEventRepository(AppDbContext dbContext) : ITransa
 
     public Task<TransactionEvent?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default) =>
         dbContext.TransactionEvents.FirstOrDefaultAsync(transactionEvent => transactionEvent.EventId == eventId, cancellationToken);
+
+    public async Task<IReadOnlyList<TransactionEvent>> GetPendingBeforeAsync(
+        DateTimeOffset receivedBefore,
+        int limit,
+        CancellationToken cancellationToken = default) =>
+        await dbContext.TransactionEvents
+            .AsNoTracking()
+            .Where(transactionEvent => transactionEvent.Status == FinancialTransactions.Domain.Enums.TransactionEventStatus.Pending
+                && transactionEvent.ReceivedAt <= receivedBefore)
+            .OrderBy(transactionEvent => transactionEvent.ReceivedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
 }

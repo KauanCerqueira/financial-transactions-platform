@@ -1,4 +1,7 @@
 using FinancialTransactions.Domain.Entities;
+using FinancialTransactions.Application.Abstractions.Caching;
+using FinancialTransactions.Application.Features.Transactions;
+using FinancialTransactions.Domain.Exceptions;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.ValueObjects;
 using FinancialTransactions.Infrastructure.Messaging;
@@ -65,7 +68,48 @@ public sealed class PostgresApiFixture : IAsyncLifetime
         dbContext.Accounts.Add(account);
         dbContext.Transactions.Add(transaction);
         await dbContext.SaveChangesAsync();
+        var cache = scope.ServiceProvider.GetRequiredService<ICacheService>();
+        await cache.RemoveAsync(CacheKeys.AccountsList);
 
         return account.Id;
+    }
+
+    public async Task<bool> ProcessDebitAsync(Guid accountId, decimal amount)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var processor = scope.ServiceProvider.GetRequiredService<IProcessTransactionUseCase>();
+        var command = new ProcessTransactionCommand(
+            Guid.NewGuid(), accountId, TransactionType.Debit, amount, DateTimeOffset.UtcNow);
+
+        try
+        {
+            await processor.ProcessAsync(command);
+            return true;
+        }
+        catch (InsufficientFundsException)
+        {
+            return false;
+        }
+    }
+
+    public async Task<Guid> CreatePendingEventAsync(Guid accountId)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var eventId = Guid.NewGuid();
+        var receivedAt = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var pending = TransactionEvent.Receive(
+            eventId, accountId, TransactionType.Credit, Money.Create(25m), receivedAt, receivedAt);
+
+        dbContext.TransactionEvents.Add(pending);
+        await dbContext.SaveChangesAsync();
+
+        return eventId;
+    }
+
+    public async Task RepublishPendingAsync()
+    {
+        using var republisher = ActivatorUtilities.CreateInstance<PendingTransactionRepublisher>(_factory.Services);
+        await republisher.RepublishPendingAsync();
     }
 }

@@ -1,6 +1,7 @@
 using FinancialTransactions.Application.Abstractions.Messaging;
 using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Dtos;
+using FinancialTransactions.Application.Exceptions;
 using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.ValueObjects;
@@ -33,11 +34,7 @@ public sealed class EnqueueTransactionUseCase(
 
         if (existingEvent is not null)
         {
-            return new EnqueuedTransaction(
-                command.EventId,
-                existingEvent.Status,
-                existingEvent.RejectionCode,
-                null);
+            return await ReturnExistingEventAsync(existingEvent, cancellationToken);
         }
 
         var amount = Money.Create(command.Amount);
@@ -50,11 +47,46 @@ public sealed class EnqueueTransactionUseCase(
             command.OccurredAt,
             timeProvider.GetUtcNow());
 
-        await transactionEvents.AddAsync(transactionEvent, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await transactionEvents.AddAsync(transactionEvent, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DuplicateEventException)
+        {
+            var concurrentEvent = await transactionEvents.GetByEventIdAsync(command.EventId, cancellationToken);
+
+            if (concurrentEvent is null)
+            {
+                throw;
+            }
+
+            return await ReturnExistingEventAsync(concurrentEvent, cancellationToken);
+        }
 
         await queue.PublishAsync(command, cancellationToken);
 
         return new EnqueuedTransaction(command.EventId, TransactionEventStatus.Pending, null, null);
+    }
+
+    private async Task<EnqueuedTransaction> ReturnExistingEventAsync(
+        TransactionEvent transactionEvent,
+        CancellationToken cancellationToken)
+    {
+        if (transactionEvent.Status == TransactionEventStatus.Pending)
+        {
+            await queue.PublishAsync(new ProcessTransactionCommand(
+                transactionEvent.EventId,
+                transactionEvent.AccountId,
+                transactionEvent.Type,
+                transactionEvent.Amount.Amount,
+                transactionEvent.OccurredAt), cancellationToken);
+        }
+
+        return new EnqueuedTransaction(
+            transactionEvent.EventId,
+            transactionEvent.Status,
+            transactionEvent.RejectionCode,
+            null);
     }
 }

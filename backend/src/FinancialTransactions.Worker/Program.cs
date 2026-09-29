@@ -26,6 +26,7 @@ builder.Services.AddInfrastructure(
 builder.Services.AddApplication();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddHostedService<TransactionQueueConsumer>();
+builder.Services.AddHostedService<PendingTransactionRepublisher>();
 
 var host = builder.Build();
 

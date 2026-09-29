@@ -64,6 +64,24 @@ public sealed class TransactionsApiTests
     }
 
     [Fact]
+    public async Task PostTransaction_WithConcurrentDuplicateRequests_ProcessesOnlyOnce()
+    {
+        var accountId = await _fixture.CreateAccountAsync("Idempotencia Concorrente", 100m);
+        var eventId = Guid.NewGuid();
+
+        var responses = await Task.WhenAll(
+            PostTransactionAsync(accountId, "CREDIT", 50m, eventId),
+            PostTransactionAsync(accountId, "CREDIT", 50m, eventId));
+
+        responses.Should().OnlyContain(response =>
+            response.StatusCode == HttpStatusCode.Accepted || response.StatusCode == HttpStatusCode.OK);
+        var completed = await WaitForCompletionAsync(eventId);
+        completed.Status.Should().Be(TransactionEventStatus.Processed);
+        var account = await GetAccountAsync(accountId);
+        account!.Balance.Should().Be(150m);
+    }
+
+    [Fact]
     public async Task PostTransaction_WithInsufficientFunds_IsRejected()
     {
         var accountId = await _fixture.CreateAccountAsync("Saldo Teste", 100m);
@@ -144,6 +162,34 @@ public sealed class TransactionsApiTests
 
         var account = await GetAccountAsync(accountId);
         account!.Balance.Should().Be(40m);
+    }
+
+    [Fact]
+    public async Task ProcessDebitAsync_WithTwoDatabaseScopes_AllowsOnlyOneDebit()
+    {
+        var accountId = await _fixture.CreateAccountAsync("Disputa real", 100m);
+
+        var results = await Task.WhenAll(
+            _fixture.ProcessDebitAsync(accountId, 60m),
+            _fixture.ProcessDebitAsync(accountId, 60m));
+
+        results.Should().ContainSingle(result => result);
+        var account = await GetAccountAsync(accountId);
+        account!.Balance.Should().Be(40m);
+    }
+
+    [Fact]
+    public async Task RepublishPendingAsync_WhenEventWasNotPublished_ProcessesStoredEvent()
+    {
+        var accountId = await _fixture.CreateAccountAsync("Recuperacao Teste", 100m);
+        var eventId = await _fixture.CreatePendingEventAsync(accountId);
+
+        await _fixture.RepublishPendingAsync();
+        var completed = await WaitForCompletionAsync(eventId);
+
+        completed.Status.Should().Be(TransactionEventStatus.Processed);
+        var account = await GetAccountAsync(accountId);
+        account!.Balance.Should().Be(125m);
     }
 
     [Fact]

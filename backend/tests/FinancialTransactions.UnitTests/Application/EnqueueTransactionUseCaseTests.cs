@@ -2,6 +2,7 @@ using FluentAssertions;
 using FinancialTransactions.Application.Abstractions.Messaging;
 using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Features.Transactions;
+using FinancialTransactions.Application.Exceptions;
 using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.ValueObjects;
@@ -94,6 +95,54 @@ public sealed class EnqueueTransactionUseCaseTests
 
         result.Status.Should().Be(TransactionEventStatus.Rejected);
         _queue.Verify(queue => queue.PublishAsync(It.IsAny<ProcessTransactionCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task EnqueueAsync_WhenPublicationFails_RepublishesTheSamePendingEventOnRetry()
+    {
+        var command = Command(Guid.NewGuid());
+        var pending = TransactionEvent.Receive(
+            command.EventId, command.AccountId, command.Type, Money.Create(command.Amount), command.OccurredAt, Now);
+
+        _transactionEvents
+            .SetupSequence(repository => repository.GetByEventIdAsync(command.EventId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransactionEvent?)null)
+            .ReturnsAsync(pending);
+        _queue
+            .SetupSequence(queue => queue.PublishAsync(It.IsAny<ProcessTransactionCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("Fila indisponível"))
+            .Returns(Task.CompletedTask);
+
+        await _useCase.Invoking(useCase => useCase.EnqueueAsync(command)).Should().ThrowAsync<IOException>();
+        var retried = await _useCase.EnqueueAsync(command);
+
+        retried.Status.Should().Be(TransactionEventStatus.Pending);
+        _unitOfWork.Verify(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _queue.Verify(queue => queue.PublishAsync(
+            It.Is<ProcessTransactionCommand>(published => published.EventId == command.EventId),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task EnqueueAsync_WhenConcurrentRequestStoresSameEvent_ReturnsPendingWithoutDuplicate()
+    {
+        var command = Command(Guid.NewGuid());
+        var pending = TransactionEvent.Receive(
+            command.EventId, command.AccountId, command.Type, Money.Create(command.Amount), command.OccurredAt, Now);
+        _transactionEvents
+            .SetupSequence(repository => repository.GetByEventIdAsync(command.EventId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TransactionEvent?)null)
+            .ReturnsAsync(pending);
+        _unitOfWork
+            .Setup(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DuplicateEventException(new IOException("Índice único")));
+
+        var result = await _useCase.EnqueueAsync(command);
+
+        result.Status.Should().Be(TransactionEventStatus.Pending);
+        _queue.Verify(queue => queue.PublishAsync(
+            It.Is<ProcessTransactionCommand>(published => published.EventId == command.EventId),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static ProcessTransactionCommand Command(Guid accountId) =>

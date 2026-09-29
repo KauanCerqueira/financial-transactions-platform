@@ -4,6 +4,7 @@ using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Exceptions;
 using FinancialTransactions.Application.Features.Transactions;
 using FinancialTransactions.Domain.Exceptions;
+using FinancialTransactions.Domain.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -91,6 +92,11 @@ public sealed class TransactionQueueConsumer(
         if (transactionEvent is null)
         {
             logger.LogWarning("Evento {EventId} não encontrado; mensagem descartada.", command.EventId);
+            return;
+        }
+
+        if (transactionEvent.Status != TransactionEventStatus.Pending)
+        {
             return;
         }
 
