@@ -16,6 +16,10 @@ banco) e cada uma tem teste.
 
 ## Telas
 
+| Tela de acesso (tema próprio do Keycloak) |
+|---|
+| ![Login](docs/prints/00-login.png) |
+
 | Contas (lista, resumo e extrato abaixo) | Extrato da conta (filtros, totais e saldo por lançamento) |
 |---|---|
 | ![Contas](docs/prints/01-contas.png) | ![Extrato](docs/prints/02-extrato.png) |
@@ -43,6 +47,9 @@ docker compose up --build
 
 Abra **http://localhost:4200** e entre com **`operador` / `operador123`**.
 
+Na primeira subida a aplicação cria **três contas com histórico de lançamentos** de demonstração — o
+extrato já nasce com créditos, débitos e paginação para explorar.
+
 | Serviço | Endereço | Observação |
 |---|---|---|
 | Aplicação web | http://localhost:4200 | o nginx serve o Angular e encaminha `/api` à API |
@@ -69,7 +76,8 @@ Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `d
   sucesso, duplicidade e saldo insuficiente** (painel na tela e aviso no canto).
 - **Estados de interface**: carregamento (esqueleto), erro com "tentar de novo", lista vazia e sessão
   expirada (que leva de volta ao login).
-- **Segurança**: acesso autenticado via Keycloak (OIDC, Authorization Code + PKCE).
+- **Segurança**: acesso autenticado via Keycloak (OIDC, Authorization Code + PKCE), com **tela de
+  login própria**, na identidade visual do projeto.
 
 ## As quatro regras de negócio
 
@@ -145,7 +153,7 @@ testar, e os erros de negócio voltam como `ProblemDetails` com um `code`
 | Docker | Um `docker compose up` sobe frontend, API, worker, banco, cache, fila e identidade |
 | **Redis** | Cache com invalidação por versão e limite de requisições (30/10s) |
 | **RabbitMQ** | Processamento assíncrono do saldo por um worker separado (endpoint `/async`) |
-| **Keycloak (OIDC/OAuth2)** | Login com PKCE no frontend e validação de JWT na API |
+| **Keycloak (OIDC/OAuth2)** | Login com PKCE no frontend, validação de JWT na API e **tema de login próprio** |
 | **Observabilidade** | Logs estruturados (Serilog) e health checks de liveness e readiness |
 
 ## Testes
@@ -153,11 +161,11 @@ testar, e os erros de negócio voltam como `ProblemDetails` com um `code`
 ```bash
 dotnet test backend/FinancialTransactions.slnx   # 54 no backend
 cd frontend
-npm test -- --watch=false                        # 40 no frontend (Jasmine/Karma)
-npm run e2e                                      # 6 ponta a ponta (Playwright)
+npm test -- --watch=false                        # 41 no frontend (Jasmine/Karma)
+npm run e2e                                      # 7 ponta a ponta (Playwright)
 ```
 
-**100 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
+**102 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
 cobrem os cenários críticos: saldo insuficiente, evento duplicado e débitos concorrentes. Os testes
 do frontend rodam no Chrome (headless) via Karma — é preciso ter o Chrome instalado. Os testes
 ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → lançamento com
@@ -204,7 +212,7 @@ frontend/
 ├─ e2e/         testes ponta a ponta (Playwright)
 ├─ scripts/     geração dos prints do README
 └─ src/app/     core, shared e features (contas, extrato e transações)
-infra/keycloak/ realm versionado (clients, role e usuário de demonstração)
+infra/keycloak/ realm, tema de login (themes/fraga) e usuário de demonstração
 docs/prints/    imagens usadas neste README
 ```
 

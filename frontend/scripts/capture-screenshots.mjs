@@ -27,6 +27,8 @@ async function capture(name, target = null) {
 async function login() {
   await page.goto(`${base}/accounts`);
   await page.waitForURL(/localhost:8081/);
+  await page.locator('.brand-scene').waitFor();
+  await capture('00-login');
   await page.fill('#username', 'operador');
   await page.fill('#password', 'operador123');
   await page.click('#kc-login');

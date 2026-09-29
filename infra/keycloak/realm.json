@@ -1,6 +1,10 @@
 {
   "realm": "fraga",
   "enabled": true,
+  "loginTheme": "fraga",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["pt-BR"],
+  "defaultLocale": "pt-BR",
   "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
