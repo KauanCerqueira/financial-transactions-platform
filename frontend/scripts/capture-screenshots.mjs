@@ -12,6 +12,10 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'pt-BR' });
 const page = await context.newPage();
 
+// primeira subida (Keycloak + API frios) pode passar dos 30s padrão
+page.setDefaultTimeout(90_000);
+page.setDefaultNavigationTimeout(90_000);
+
 async function capture(name, target = null) {
   await page.waitForTimeout(700);
 

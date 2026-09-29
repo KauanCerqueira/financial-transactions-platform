@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.ValueObjects;
@@ -68,7 +66,6 @@ public static class DatabaseSeeder
         }
 
         var now = timeProvider.GetUtcNow();
-        var sequence = 0;
 
         foreach (var seedAccount in SeedAccounts)
         {
@@ -76,10 +73,9 @@ public static class DatabaseSeeder
 
             foreach (var movement in seedAccount.Movements)
             {
-                sequence++;
                 // histórico de demonstração: eventos do passado, gravados agora
                 account.RegisterTransaction(
-                    SeedEventId(sequence),
+                    Guid.NewGuid(),
                     movement.Type,
                     Money.Create(movement.Amount),
                     now.AddDays(-movement.DaysAgo),
@@ -91,7 +87,4 @@ public static class DatabaseSeeder
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
-
-    private static Guid SeedEventId(int sequence) =>
-        new(SHA256.HashData(Encoding.UTF8.GetBytes($"seed-transaction-{sequence}"))[..16]);
 }
