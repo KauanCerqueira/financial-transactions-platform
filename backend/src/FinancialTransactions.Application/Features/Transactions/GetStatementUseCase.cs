@@ -21,8 +21,9 @@ public sealed class GetStatementUseCase(
 
         var page = Math.Max(query.Page, 1);
         var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
+        var filter = new StatementFilter(query.Type, query.From, query.To);
 
-        var cacheKey = await BuildCacheKeyAsync(query.AccountId, page, pageSize, cancellationToken);
+        var cacheKey = await BuildCacheKeyAsync(query.AccountId, page, pageSize, filter, cancellationToken);
         var cached = await cache.GetAsync<PagedResult<TransactionDto>>(cacheKey, cancellationToken);
 
         if (cached is not null)
@@ -31,8 +32,8 @@ public sealed class GetStatementUseCase(
         }
 
         var skip = (page - 1) * pageSize;
-        var pageItems = await transactions.GetPageAsync(query.AccountId, skip, pageSize, cancellationToken);
-        var totalItems = await transactions.CountByAccountIdAsync(query.AccountId, cancellationToken);
+        var pageItems = await transactions.GetPageAsync(query.AccountId, filter, skip, pageSize, cancellationToken);
+        var totalItems = await transactions.CountByAccountIdAsync(query.AccountId, filter, cancellationToken);
 
         var result = new PagedResult<TransactionDto>(
             pageItems.Select(TransactionDto.From).ToList(),
@@ -49,11 +50,15 @@ public sealed class GetStatementUseCase(
         Guid accountId,
         int page,
         int pageSize,
+        StatementFilter filter,
         CancellationToken cancellationToken)
     {
         var version = await cache.GetAsync<string>(CacheKeys.StatementVersion(accountId), cancellationToken) ?? "0";
+        var type = filter.Type?.ToString() ?? "all";
+        var from = filter.From?.ToUnixTimeSeconds().ToString() ?? "start";
+        var to = filter.To?.ToUnixTimeSeconds().ToString() ?? "end";
 
-        return $"statement:{accountId}:{version}:{page}:{pageSize}";
+        return $"statement:{accountId}:{version}:{type}:{from}:{to}:{page}:{pageSize}";
     }
 
     private async Task EnsureAccountExistsAsync(Guid accountId, CancellationToken cancellationToken)

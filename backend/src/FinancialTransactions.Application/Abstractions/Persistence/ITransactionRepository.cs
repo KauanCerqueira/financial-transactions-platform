@@ -10,9 +10,13 @@ public interface ITransactionRepository
 
     Task<IReadOnlyList<Transaction>> GetPageAsync(
         Guid accountId,
+        StatementFilter filter,
         int skip,
         int take,
         CancellationToken cancellationToken = default);
 
-    Task<int> CountByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default);
+    Task<int> CountByAccountIdAsync(
+        Guid accountId,
+        StatementFilter filter,
+        CancellationToken cancellationToken = default);
 }

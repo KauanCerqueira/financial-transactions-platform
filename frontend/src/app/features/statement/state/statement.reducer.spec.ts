@@ -15,11 +15,15 @@ const transaction: Transaction = {
 
 describe('statementReducer', () => {
   it('keeps the requested page and marks loading', () => {
-    const state = statementReducer(undefined, StatementActions.loadStatement({ accountId: 'a1', page: 3, pageSize: 20 }));
+    const state = statementReducer(
+      undefined,
+      StatementActions.loadStatement({ accountId: 'a1', page: 3, pageSize: 20, filters: { type: 'DEBIT' } }),
+    );
 
     expect(state.status).toBe('loading');
     expect(state.page).toBe(3);
     expect(state.pageSize).toBe(20);
+    expect(state.filters).toEqual({ type: 'DEBIT' });
   });
 
   it('stores the paged result on success', () => {

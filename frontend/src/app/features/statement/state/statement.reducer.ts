@@ -1,5 +1,6 @@
 import { createReducer, on } from '@ngrx/store';
 import { LoadStatus } from '../../../core/models/load-status';
+import { emptyStatementFilters, StatementFilters } from '../../../core/models/statement-filters';
 import { Transaction } from '../../../core/models/transaction';
 import * as StatementActions from './statement.actions';
 
@@ -11,6 +12,7 @@ export interface StatementState {
   pageSize: number;
   totalItems: number;
   totalPages: number;
+  filters: StatementFilters;
   status: LoadStatus;
   error: string | null;
 }
@@ -21,16 +23,18 @@ const initialState: StatementState = {
   pageSize: 10,
   totalItems: 0,
   totalPages: 0,
+  filters: emptyStatementFilters,
   status: 'idle',
   error: null,
 };
 
 export const statementReducer = createReducer(
   initialState,
-  on(StatementActions.loadStatement, (state, { page, pageSize }) => ({
+  on(StatementActions.loadStatement, (state, { page, pageSize, filters }) => ({
     ...state,
     page,
     pageSize,
+    filters: filters ?? emptyStatementFilters,
     status: 'loading' as LoadStatus,
     error: null,
   })),

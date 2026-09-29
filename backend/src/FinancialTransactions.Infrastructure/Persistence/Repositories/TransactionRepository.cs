@@ -16,18 +16,44 @@ public sealed class TransactionRepository(AppDbContext dbContext) : ITransaction
 
     public async Task<IReadOnlyList<Transaction>> GetPageAsync(
         Guid accountId,
+        StatementFilter filter,
         int skip,
         int take,
         CancellationToken cancellationToken = default) =>
-        await dbContext.Transactions
-            .AsNoTracking()
-            .Where(transaction => transaction.AccountId == accountId)
+        await ApplyFilter(accountId, filter)
             .OrderByDescending(transaction => transaction.OccurredAt)
             .ThenByDescending(transaction => transaction.RecordedAt)
             .Skip(skip)
             .Take(take)
             .ToListAsync(cancellationToken);
 
-    public Task<int> CountByAccountIdAsync(Guid accountId, CancellationToken cancellationToken = default) =>
-        dbContext.Transactions.CountAsync(transaction => transaction.AccountId == accountId, cancellationToken);
+    public Task<int> CountByAccountIdAsync(
+        Guid accountId,
+        StatementFilter filter,
+        CancellationToken cancellationToken = default) =>
+        ApplyFilter(accountId, filter).CountAsync(cancellationToken);
+
+    private IQueryable<Transaction> ApplyFilter(Guid accountId, StatementFilter filter)
+    {
+        var query = dbContext.Transactions
+            .AsNoTracking()
+            .Where(transaction => transaction.AccountId == accountId);
+
+        if (filter.Type is not null)
+        {
+            query = query.Where(transaction => transaction.Type == filter.Type);
+        }
+
+        if (filter.From is not null)
+        {
+            query = query.Where(transaction => transaction.OccurredAt >= filter.From);
+        }
+
+        if (filter.To is not null)
+        {
+            query = query.Where(transaction => transaction.OccurredAt <= filter.To);
+        }
+
+        return query;
+    }
 }

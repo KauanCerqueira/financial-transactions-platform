@@ -13,8 +13,8 @@ export class StatementEffects {
   readonly load = createEffect(() =>
     this.actions.pipe(
       ofType(StatementActions.loadStatement),
-      switchMap(({ accountId, page, pageSize }) =>
-        this.accountsApi.getStatement(accountId, page, pageSize).pipe(
+      switchMap(({ accountId, page, pageSize, filters }) =>
+        this.accountsApi.getStatement(accountId, page, pageSize, filters).pipe(
           map((result) => StatementActions.loadStatementSuccess({ result })),
           catchError((error: ApiError) => of(StatementActions.loadStatementFailure({ error: error.message }))),
         ),

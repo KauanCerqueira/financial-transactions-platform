@@ -5,7 +5,7 @@
     </a>
   }
 
-  <section class="statement-card card" aria-label="Extrato da conta selecionada">
+  <section class="statement-card card" aria-label="Detalhes da conta">
     <header class="statement-head">
       <span class="summary__icon"><app-icon name="bank" /></span>
       <div class="statement-head__identity">
@@ -18,96 +18,194 @@
         </div>
       }
     </header>
-    <div class="statement-tab"><app-icon name="history" />Extrato</div>
-    <div class="statement-body">
-      <div class="section-head">
-        <div>
-          <h2>Histórico de Transações</h2>
-          <p class="page__subtitle">
-            Movimentações da conta e o impacto de cada lançamento no saldo.
-          </p>
+
+    <div class="statement-tabs" role="tablist" aria-label="Seções da conta">
+      <button
+        type="button"
+        role="tab"
+        class="statement-tab"
+        [class.is-active]="activeTab() === 'statement'"
+        [attr.aria-selected]="activeTab() === 'statement'"
+        (click)="activeTab.set('statement')"
+      >
+        <app-icon name="history" />Extrato
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="statement-tab"
+        [class.is-active]="activeTab() === 'info'"
+        [attr.aria-selected]="activeTab() === 'info'"
+        (click)="activeTab.set('info')"
+      >
+        <app-icon name="info" />Informações
+      </button>
+    </div>
+
+    @if (activeTab() === 'statement') {
+      <div class="statement-body">
+        <div class="section-head">
+          <div>
+            <h2>Histórico de Transações</h2>
+            <p class="page__subtitle">Movimentações da conta e o impacto de cada lançamento no saldo.</p>
+          </div>
+          <button class="icon-button" aria-label="Atualizar extrato" (click)="reload()">
+            <app-icon name="refresh" />
+          </button>
         </div>
-        <button class="icon-button" aria-label="Atualizar extrato" (click)="reload()">
-          <app-icon name="refresh" />
-        </button>
-      </div>
-      @switch (status()) {
-        @case ('loading') {
-          <div class="rows" role="status" aria-label="Carregando extrato">
-            @for (row of [1, 2, 3]; track row) {
-              <div class="skeleton" aria-hidden="true"></div>
-            }
-          </div>
-        }
-        @case ('error') {
-          <div class="state state--error" role="alert">
-            <p class="state__title"><app-icon name="alert" />Não foi possível carregar o extrato</p>
-            <p class="state__text">{{ error() }}</p>
-            <button matButton="filled" (click)="reload()">Tentar de novo</button>
-          </div>
-        }
-        @default {
-          @if (items().length === 0) {
-            <div class="state">
-              <p class="state__title"><app-icon name="history" />Nenhum lançamento nesta conta</p>
-              <p class="state__text">Os lançamentos aparecem aqui conforme forem registrados.</p>
-              <a matButton routerLink="/transactions/new" [queryParams]="{ accountId: accountId() }"
-                >Registrar primeira transação</a
-              >
-            </div>
-          } @else {
-            <div class="table-scroll" tabindex="0" role="region" aria-label="Histórico de transações">
-              <table class="table statement-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Data e Hora</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col" class="table__number">Valor</th>
-                    <th scope="col" class="table__number">Saldo Após</th>
-                    <th scope="col">Event ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of items(); track item.id) {
-                    <tr>
-                      <td class="date-cell">{{ item.occurredAt | dateTimeBr }}</td>
-                      <td>
-                        <span
-                          class="badge"
-                          [class.badge--credit]="item.type === 'CREDIT'"
-                          [class.badge--debit]="item.type === 'DEBIT'"
-                          >{{ item.type === 'CREDIT' ? 'Crédito' : 'Débito' }}</span
-                        >
-                      </td>
-                      <td
-                        class="table__number amount"
-                        [class.amount--credit]="item.type === 'CREDIT'"
-                        [class.amount--debit]="item.type === 'DEBIT'"
-                      >
-                        {{ item.type === 'CREDIT' ? '+' : '−' }}{{ item.amount | brl }}
-                      </td>
-                      <td class="table__number">{{ item.balanceAfter | brl }}</td>
-                      <td class="identifier">{{ item.eventId }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-            <div class="statement-footer">
-              <span>{{ totalItems() }} transações</span
-              ><mat-paginator
-                class="paginator"
-                [length]="totalItems()"
-                [pageSize]="pageSize()"
-                [pageIndex]="page() - 1"
-                [pageSizeOptions]="[5, 10, 20]"
-                (page)="onPage($event)"
-                aria-label="Paginação do extrato"
-              />
+
+        <div class="statement-filters">
+          <label class="filter">
+            <span class="filter__label">Tipo</span>
+            <select
+              class="filter__control"
+              [value]="filterType()"
+              (change)="onTypeChange(typeSelect.value)"
+              #typeSelect
+            >
+              <option value="ALL">Todos</option>
+              <option value="CREDIT">Crédito</option>
+              <option value="DEBIT">Débito</option>
+            </select>
+          </label>
+          <label class="filter">
+            <span class="filter__label">De</span>
+            <input
+              class="filter__control"
+              type="date"
+              [value]="filterFrom()"
+              (change)="onFromChange(fromInput.value)"
+              #fromInput
+            />
+          </label>
+          <label class="filter">
+            <span class="filter__label">Até</span>
+            <input
+              class="filter__control"
+              type="date"
+              [value]="filterTo()"
+              (change)="onToChange(toInput.value)"
+              #toInput
+            />
+          </label>
+          @if (hasFilters()) {
+            <button class="filter__clear" type="button" (click)="clearFilters()">
+              <app-icon name="close" />Limpar filtros
+            </button>
+          }
+        </div>
+
+        @switch (status()) {
+          @case ('loading') {
+            <div class="rows" role="status" aria-label="Carregando extrato">
+              @for (row of [1, 2, 3]; track row) {
+                <div class="skeleton" aria-hidden="true"></div>
+              }
             </div>
           }
+          @case ('error') {
+            <div class="state state--error" role="alert">
+              <p class="state__title"><app-icon name="alert" />Não foi possível carregar o extrato</p>
+              <p class="state__text">{{ error() }}</p>
+              <button matButton="filled" (click)="reload()">Tentar de novo</button>
+            </div>
+          }
+          @default {
+            @if (items().length === 0) {
+              <div class="state">
+                <p class="state__title"><app-icon name="history" />Nenhum lançamento encontrado</p>
+                <p class="state__text">
+                  {{ hasFilters() ? 'Nenhum lançamento corresponde aos filtros escolhidos.' : 'Os lançamentos aparecem aqui conforme forem registrados.' }}
+                </p>
+                @if (hasFilters()) {
+                  <button matButton="filled" (click)="clearFilters()">Limpar filtros</button>
+                } @else {
+                  <a matButton routerLink="/transactions/new" [queryParams]="{ accountId: accountId() }"
+                    >Registrar primeira transação</a
+                  >
+                }
+              </div>
+            } @else {
+              <div class="table-scroll" tabindex="0" role="region" aria-label="Histórico de transações">
+                <table class="table statement-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Data e Hora</th>
+                      <th scope="col">Tipo</th>
+                      <th scope="col" class="table__number">Valor</th>
+                      <th scope="col" class="table__number">Saldo Após</th>
+                      <th scope="col">Event ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of items(); track item.id) {
+                      <tr>
+                        <td class="date-cell">{{ item.occurredAt | dateTimeBr }}</td>
+                        <td>
+                          <span
+                            class="badge"
+                            [class.badge--credit]="item.type === 'CREDIT'"
+                            [class.badge--debit]="item.type === 'DEBIT'"
+                            >{{ item.type === 'CREDIT' ? 'Crédito' : 'Débito' }}</span
+                          >
+                        </td>
+                        <td
+                          class="table__number amount"
+                          [class.amount--credit]="item.type === 'CREDIT'"
+                          [class.amount--debit]="item.type === 'DEBIT'"
+                        >
+                          {{ item.type === 'CREDIT' ? '+' : '−' }}{{ item.amount | brl }}
+                        </td>
+                        <td class="table__number">{{ item.balanceAfter | brl }}</td>
+                        <td class="identifier">{{ item.eventId }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="statement-footer">
+                <span>{{ totalItems() }} transações</span
+                ><mat-paginator
+                  class="paginator"
+                  [length]="totalItems()"
+                  [pageSize]="pageSize()"
+                  [pageIndex]="page() - 1"
+                  [pageSizeOptions]="[5, 10, 20]"
+                  (page)="onPage($event)"
+                  aria-label="Paginação do extrato"
+                />
+              </div>
+            }
+          }
         }
-      }
-    </div>
+      </div>
+    } @else {
+      <div class="statement-body">
+        <div class="section-head">
+          <div>
+            <h2>Informações da Conta</h2>
+            <p class="page__subtitle">Dados cadastrais e situação atual.</p>
+          </div>
+        </div>
+        <dl class="info-grid">
+          <div class="info-grid__item">
+            <dt>Titular</dt>
+            <dd>{{ account()?.holderName ?? '—' }}</dd>
+          </div>
+          <div class="info-grid__item">
+            <dt>ID da conta</dt>
+            <dd class="identifier">{{ accountId() }}</dd>
+          </div>
+          <div class="info-grid__item">
+            <dt>Saldo atual</dt>
+            <dd class="amount--credit">{{ account()?.balance ?? 0 | brl }}</dd>
+          </div>
+          <div class="info-grid__item">
+            <dt>Criada em</dt>
+            <dd>{{ account()?.createdAt | dateBr }}</dd>
+          </div>
+        </dl>
+      </div>
+    }
   </section>
 </div>
