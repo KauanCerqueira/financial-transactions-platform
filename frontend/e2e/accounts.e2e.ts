@@ -4,8 +4,10 @@ import { login } from './session';
 test('faz login e lista as contas com o saldo consolidado', async ({ page }) => {
   await login(page);
 
-  await expect(page.locator('.accounts-table tbody tr')).toHaveCount(3);
-  await expect(page.locator('.accounts-table').getByText('Ana Souza')).toBeVisible();
+  const table = page.locator('.accounts-table');
+  await expect(table.getByText('Ana Souza')).toBeVisible();
+  await expect(table.getByText('Bruno Lima')).toBeVisible();
+  await expect(table.getByText('Carla Mendes')).toBeVisible();
   await expect(page.locator('.summary').getByText('Total em Contas')).toBeVisible();
   await expect(page.locator('.summary').getByText('Total de Transações')).toBeVisible();
 });

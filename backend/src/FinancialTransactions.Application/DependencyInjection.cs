@@ -10,6 +10,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IGetAccountsUseCase, GetAccountsUseCase>();
         services.AddScoped<IGetAccountsSummaryUseCase, GetAccountsSummaryUseCase>();
+        services.AddScoped<ICreateAccountUseCase, CreateAccountUseCase>();
         services.AddScoped<IGetStatementUseCase, GetStatementUseCase>();
         services.AddScoped<IProcessTransactionUseCase, ProcessTransactionUseCase>();
         services.AddScoped<IEnqueueTransactionUseCase, EnqueueTransactionUseCase>();

@@ -11,6 +11,13 @@ export const routes: Routes = [
       import('./features/accounts/financial-workspace').then((module) => module.FinancialWorkspace),
   },
   {
+    path: 'accounts/new',
+    title: 'Nova conta · FRAGA Financeiro',
+    canActivate: [autoLoginPartialRoutesGuard],
+    loadComponent: () =>
+      import('./features/accounts/financial-workspace').then((module) => module.FinancialWorkspace),
+  },
+  {
     path: 'accounts/:accountId/statement',
     title: 'Extrato · FRAGA Financeiro',
     canActivate: [autoLoginPartialRoutesGuard],

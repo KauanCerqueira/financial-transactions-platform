@@ -4,3 +4,8 @@ export interface Account {
   balance: number;
   createdAt: string;
 }
+
+export interface CreateAccountRequest {
+  holderName: string;
+  initialBalance: number;
+}

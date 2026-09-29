@@ -27,13 +27,17 @@ O enunciado que originou o projeto está em
 |---|---|
 | ![Contas](docs/prints/01-contas.png) | ![Extrato](docs/prints/02-extrato.png) |
 
-| Informações da conta | Nova transação (painel lateral) |
+| Informações da conta | Nova conta (painel lateral) |
 |---|---|
-| ![Informações](docs/prints/03-informacoes.png) | ![Nova transação](docs/prints/04-nova-transacao.png) |
+| ![Informações](docs/prints/03-informacoes.png) | ![Nova conta](docs/prints/07-nova-conta.png) |
 
-| Feedback de sucesso | Feedback de saldo insuficiente |
+| Nova transação (painel lateral) | Feedback de sucesso |
 |---|---|
-| ![Sucesso](docs/prints/05-lancamento-sucesso.png) | ![Saldo insuficiente](docs/prints/06-saldo-insuficiente.png) |
+| ![Nova transação](docs/prints/04-nova-transacao.png) | ![Sucesso](docs/prints/05-lancamento-sucesso.png) |
+
+| Feedback de saldo insuficiente |
+|---|
+| ![Saldo insuficiente](docs/prints/06-saldo-insuficiente.png) |
 
 > Os prints são gerados pelo próprio projeto, com `npm run prints` (Playwright), a partir da aplicação
 > em execução — assim nunca ficam desatualizados.
@@ -70,6 +74,8 @@ Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `d
 
 ## O que o sistema faz
 
+- **Cadastro de conta** com titular e **saldo inicial opcional**. O saldo inicial entra no extrato como
+  lançamento de abertura, então saldo e histórico nunca divergem.
 - **Lista de contas** com saldo consolidado e um resumo (total em contas, contas cadastradas e total de
   lançamentos).
 - **Extrato da conta** logo abaixo da lista: **clicar em qualquer lugar da linha** de uma conta troca o
@@ -133,6 +139,7 @@ POST /api/transactions
 | Método e rota | Resultado |
 |---|---|
 | `GET /api/accounts` | Contas com saldo consolidado |
+| `POST /api/accounts` | Cria uma conta (201). O saldo inicial vira lançamento de abertura (400 se os dados forem inválidos) |
 | `GET /api/accounts/summary` | Resumo: contas, saldo total e lançamentos |
 | `GET /api/accounts/{id}/transactions?page=&pageSize=&type=&from=&to=` | Extrato paginado com filtros e o resumo de créditos/débitos do período |
 | `POST /api/transactions` | Processa o evento e atualiza o saldo (201 / 200 / 422 / 404) |
@@ -162,17 +169,18 @@ testar, e os erros de negócio voltam como `ProblemDetails` com um `code`
 ## Testes
 
 ```bash
-dotnet test backend/FinancialTransactions.slnx   # 54 no backend
+dotnet test backend/FinancialTransactions.slnx   # 63 no backend
 cd frontend
-npm test -- --watch=false                        # 41 no frontend (Jasmine/Karma)
-npm run e2e                                      # 7 ponta a ponta (Playwright)
+npm test -- --watch=false                        # 58 no frontend (Jasmine/Karma)
+npm run e2e                                      # 9 ponta a ponta (Playwright)
 ```
 
-**102 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
+**130 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
 cobrem os cenários críticos: saldo insuficiente, evento duplicado e débitos concorrentes. Os testes
 do frontend rodam no Chrome (headless) via Karma — é preciso ter o Chrome instalado. Os testes
-ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → lançamento com
-sucesso → rejeição por saldo insuficiente e precisam da aplicação no ar (`docker compose up`).
+ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → cadastro de conta
+→ lançamento com sucesso → rejeição por saldo insuficiente e precisam da aplicação no ar
+(`docker compose up`).
 
 ---
 

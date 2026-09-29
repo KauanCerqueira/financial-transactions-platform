@@ -12,7 +12,7 @@ export class AccountsEffects {
 
   readonly load = createEffect(() =>
     this.actions.pipe(
-      ofType(AccountsActions.loadAccounts),
+      ofType(AccountsActions.loadAccounts, AccountsActions.refreshAccounts),
       switchMap(() =>
         forkJoin({
           accounts: this.accountsApi.getAll(),
@@ -22,6 +22,28 @@ export class AccountsEffects {
           catchError((error: ApiError) => of(AccountsActions.loadAccountsFailure({ error: error.message }))),
         ),
       ),
+    ),
+  );
+
+  readonly create = createEffect(() =>
+    this.actions.pipe(
+      ofType(AccountsActions.createAccount),
+      switchMap(({ holderName, initialBalance }) =>
+        this.accountsApi.createAccount({ holderName, initialBalance }).pipe(
+          map((account) => AccountsActions.createAccountSuccess({ account })),
+          catchError((error: ApiError) =>
+            of(AccountsActions.createAccountFailure({ message: error.message, code: error.code })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  // o resumo (saldo consolidado e total de lançamentos) muda ao criar uma conta
+  readonly refreshAfterCreate = createEffect(() =>
+    this.actions.pipe(
+      ofType(AccountsActions.createAccountSuccess),
+      map(() => AccountsActions.refreshAccounts()),
     ),
   );
 }

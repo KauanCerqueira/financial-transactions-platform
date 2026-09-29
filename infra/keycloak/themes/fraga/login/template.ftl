@@ -14,7 +14,7 @@
         </#list>
     </#if>
     <title>${msg("loginTitle",(realm.displayName!''))}</title>
-    <link rel="icon" type="image/png" href="${url.resourcesPath}/img/fraga-logo-color.png" />
+    <link rel="icon" type="image/png" href="${url.resourcesPath}/img/favicon.png" />
     <#if properties.stylesCommon?has_content>
         <#list properties.stylesCommon?split(' ') as style>
             <link href="${url.resourcesCommonPath}/${style}" rel="stylesheet" />

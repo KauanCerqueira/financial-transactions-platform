@@ -13,6 +13,7 @@ namespace FinancialTransactions.Api.Controllers;
 public sealed class AccountsController(
     IGetAccountsUseCase getAccounts,
     IGetAccountsSummaryUseCase getAccountsSummary,
+    ICreateAccountUseCase createAccount,
     IGetStatementUseCase getStatement) : ControllerBase
 {
     [HttpGet]
@@ -20,6 +21,23 @@ public sealed class AccountsController(
     [SwaggerResponse(StatusCodes.Status200OK, "Contas retornadas com sucesso.", typeof(IReadOnlyList<AccountDto>))]
     public async Task<ActionResult<IReadOnlyList<AccountDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await getAccounts.GetAllAsync(cancellationToken));
+
+    [HttpPost]
+    [SwaggerOperation(
+        Summary = "Cria uma conta",
+        Description = "Cadastra uma nova conta. Saldo inicial maior que zero entra como lançamento de abertura no extrato, para saldo e histórico nunca divergirem.")]
+    [SwaggerResponse(StatusCodes.Status201Created, "Conta criada com sucesso.", typeof(AccountDto))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Dados inválidos: titular vazio ou saldo inicial negativo.")]
+    public async Task<ActionResult<AccountDto>> Create(
+        CreateAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        var account = await createAccount.CreateAsync(
+            new CreateAccountCommand(request.HolderName, request.InitialBalance),
+            cancellationToken);
+
+        return Created($"/api/accounts/{account.Id}/transactions", account);
+    }
 
     [HttpGet("summary")]
     [SwaggerOperation(

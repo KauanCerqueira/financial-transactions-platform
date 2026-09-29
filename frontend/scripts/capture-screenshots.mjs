@@ -72,5 +72,9 @@ await page.locator('.toast--error').waitFor();
 await page.screenshot({ path: `${outputDir}06-saldo-insuficiente.png`, fullPage: true });
 console.log('capturado: 06-saldo-insuficiente.png');
 
+await page.goto(`${base}/accounts/new`);
+await page.locator('.transaction-panel form').waitFor();
+await capture('07-nova-conta');
+
 await browser.close();
 console.log(`\nPrints salvos em ${outputDir}`);

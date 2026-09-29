@@ -25,13 +25,20 @@ function toApiError(response: HttpErrorResponse): ApiError {
     return new ApiError('NETWORK_ERROR', messageForCode('NETWORK_ERROR', 'Falha de rede.'), 0);
   }
 
-  const body = response.error as { code?: string; detail?: string } | null;
+  const body = response.error as {
+    code?: string;
+    detail?: string;
+    errors?: Record<string, string[]>;
+  } | null;
   const code = body?.code ?? `HTTP_${response.status}`;
 
   return new ApiError(code, messageForCode(code, fallbackMessage(response, body)), response.status);
 }
 
-function fallbackMessage(response: HttpErrorResponse, body: { detail?: string } | null): string {
+function fallbackMessage(
+  response: HttpErrorResponse,
+  body: { detail?: string; errors?: Record<string, string[]> } | null,
+): string {
   if (response.status === 401) {
     return 'Sua sessão expirou. Entrando novamente...';
   }
@@ -40,5 +47,8 @@ function fallbackMessage(response: HttpErrorResponse, body: { detail?: string } 
     return 'Ocorreu um erro inesperado. Tente novamente em instantes.';
   }
 
-  return body?.detail ?? 'Não foi possível concluir a operação.';
+  // validação do [ApiController]: o corpo traz uma mensagem por campo
+  const validationMessage = Object.values(body?.errors ?? {}).flat()[0];
+
+  return body?.detail ?? validationMessage ?? 'Não foi possível concluir a operação.';
 }

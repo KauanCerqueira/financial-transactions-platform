@@ -1,0 +1,76 @@
+<section class="transaction-content">
+  <header class="page__head">
+    <div>
+      <h2>Nova Conta</h2>
+      <p class="page__subtitle">Cadastre um titular para começar a movimentar.</p>
+    </div>
+    <a class="icon-button" [routerLink]="['/accounts']" aria-label="Fechar nova conta"
+      ><app-icon name="close"
+    /></a>
+  </header>
+
+  @if (createdAccount(); as account) {
+    <div class="result" role="status">
+      <p class="result__title"><app-icon name="check" />Conta criada</p>
+
+      <div class="result__row">
+        <span class="result__label">Titular</span>
+        <span>{{ account.holderName }}</span>
+      </div>
+      <div class="result__row">
+        <span class="result__label">Referência</span>
+        <span class="identifier" [title]="account.id">{{ account.id | shortId }}</span>
+      </div>
+      <div class="result__row">
+        <span class="result__label">Saldo inicial</span>
+        <span class="value">{{ account.balance | brl }}</span>
+      </div>
+
+      <div class="result__actions">
+        <button matButton="filled" (click)="createAnother()">
+          <app-icon name="add" class="icon-gap" />Nova conta
+        </button>
+        <a matButton [routerLink]="['/accounts', account.id, 'statement']"
+          >Ver extrato<app-icon name="chevron-right" class="icon-gap-left"
+        /></a>
+      </div>
+    </div>
+  } @else if (status() === 'error' && error(); as failure) {
+    <div class="state state--error" role="alert">
+      <p class="state__title"><app-icon name="alert" />Não foi possível criar a conta</p>
+      <p class="state__text">{{ failure.message }}</p>
+    </div>
+  }
+
+  @if (!createdAccount()) {
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label class="field__label" for="holderName">Titular <span class="required">*</span></label>
+        <input id="holderName" formControlName="holderName" autocomplete="name" />
+        @if (form.controls.holderName.touched && form.controls.holderName.invalid) {
+          <span class="field__error">Informe o nome do titular.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="initialBalance">Saldo inicial (R$)</label>
+        <input id="initialBalance" type="number" step="0.01" min="0" formControlName="initialBalance" />
+        @if (form.controls.initialBalance.touched && form.controls.initialBalance.invalid) {
+          <span class="field__error">O saldo inicial não pode ser negativo.</span>
+        }
+        <span class="field__hint"
+          ><app-icon name="info" />Opcional. Valores maiores que zero entram no extrato como crédito de
+          abertura.</span
+        >
+      </div>
+
+      <div class="form-actions">
+        <a class="button-outline" routerLink="/accounts">Cancelar</a>
+        <button matButton="filled" type="submit" [disabled]="submitting()">
+          <app-icon name="add" class="icon-gap" />
+          {{ submitting() ? 'Criando…' : 'Criar Conta' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

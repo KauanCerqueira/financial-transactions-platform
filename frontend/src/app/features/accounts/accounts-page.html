@@ -4,12 +4,17 @@
       <h1>Contas</h1>
       <p class="page__subtitle">Gerencie suas contas e visualize os saldos consolidados.</p>
     </div>
-    <a
-      matButton="filled"
-      routerLink="/transactions/new"
-      [queryParams]="{ accountId: selectedAccountId() }"
-      ><app-icon name="add" class="icon-gap" />Nova Transação</a
-    >
+    <div class="page__actions">
+      <a class="button-outline" routerLink="/accounts/new">
+        <app-icon name="add" />Nova Conta
+      </a>
+      <a
+        matButton="filled"
+        routerLink="/transactions/new"
+        [queryParams]="{ accountId: selectedAccountId() }"
+        ><app-icon name="add" class="icon-gap" />Nova Transação</a
+      >
+    </div>
   </header>
   @switch (status()) {
     @case ('loading') {

@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Account } from '../models/account';
+import { Account, CreateAccountRequest } from '../models/account';
 import { AccountsSummary } from '../models/accounts-summary';
 import { PagedResult } from '../models/paged-result';
 import { Statement } from '../models/statement';
@@ -18,6 +18,10 @@ export class AccountsApi {
 
   getSummary(): Observable<AccountsSummary> {
     return this.http.get<AccountsSummary>('/api/accounts/summary');
+  }
+
+  createAccount(request: CreateAccountRequest): Observable<Account> {
+    return this.http.post<Account>('/api/accounts', request);
   }
 
   getStatement(

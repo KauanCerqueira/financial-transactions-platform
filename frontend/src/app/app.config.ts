@@ -9,6 +9,7 @@ import { authInterceptor, provideAuth, withAppInitializerAuthCheck } from 'angul
 import { apiErrorInterceptor } from './core/interceptors/api-error.interceptor';
 import { PtBrPaginatorIntl } from './core/i18n/pt-br-paginator';
 import { AccountsEffects } from './features/accounts/state/accounts.effects';
+import { AccountsNotifications } from './features/accounts/state/accounts-notifications';
 import { accountsFeatureKey, accountsReducer } from './features/accounts/state/accounts.reducer';
 import { StatementEffects } from './features/statement/state/statement.effects';
 import { statementFeatureKey, statementReducer } from './features/statement/state/statement.reducer';
@@ -44,7 +45,13 @@ export const appConfig: ApplicationConfig = {
     provideState(accountsFeatureKey, accountsReducer),
     provideState(statementFeatureKey, statementReducer),
     provideState(transactionsFeatureKey, transactionsReducer),
-    provideEffects(AccountsEffects, StatementEffects, TransactionsEffects, TransactionsNotifications),
+    provideEffects(
+      AccountsEffects,
+      AccountsNotifications,
+      StatementEffects,
+      TransactionsEffects,
+      TransactionsNotifications,
+    ),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
 
     { provide: MatPaginatorIntl, useClass: PtBrPaginatorIntl },

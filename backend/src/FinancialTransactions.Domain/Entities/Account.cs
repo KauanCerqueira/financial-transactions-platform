@@ -43,6 +43,23 @@ public sealed class Account
         };
     }
 
+    public static Account Open(
+        Guid id,
+        string holderName,
+        Money initialBalance,
+        DateTimeOffset now)
+    {
+        var account = Create(id, holderName, Money.Zero, now);
+
+        if (!initialBalance.IsZero)
+        {
+            // saldo inicial entra como crédito para o extrato bater com o saldo
+            account.RegisterTransaction(Guid.NewGuid(), TransactionType.Credit, initialBalance, now, now);
+        }
+
+        return account;
+    }
+
     public Transaction RegisterTransaction(
         Guid eventId,
         TransactionType type,
