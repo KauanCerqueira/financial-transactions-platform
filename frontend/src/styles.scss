@@ -692,13 +692,6 @@ button:disabled {
   flex-wrap: wrap;
   gap: 8px;
 }
-.result--processing {
-  background: #f5f8fc;
-  border-color: var(--fraga-line);
-}
-.result--processing .result__title {
-  color: #354159;
-}
 .state {
   display: grid;
   justify-items: start;
@@ -741,14 +734,6 @@ button:disabled {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #dce2ea;
-  border-top-color: var(--fraga-red);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
 app-icon {
   display: inline-flex;
   flex: none;
@@ -769,11 +754,6 @@ app-icon svg {
 @keyframes shimmer {
   to {
     background-position: -200% 0;
-  }
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 @media (max-width: 1350px) {

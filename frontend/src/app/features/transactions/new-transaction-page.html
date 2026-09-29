@@ -44,13 +44,6 @@
         </div>
       </div>
     }
-  } @else if (status() === 'processing') {
-    <div class="result result--processing" role="status">
-      <p class="result__title"><span class="spinner"></span>Processando…</p>
-      <p class="state__text">
-        O lançamento foi recebido e está na fila para ser processado. O saldo atualiza em instantes.
-      </p>
-    </div>
   } @else if (status() === 'error') {
     @if (error(); as failure) {
       <div class="state state--error" role="alert">
@@ -59,8 +52,8 @@
         </p>
         <p class="state__text">{{ failure.message }}</p>
         <div class="result__actions">
-          @if (result()?.status !== 'REJECTED' && submittedCommand()) {
-            <button matButton="filled" (click)="retry()">Consultar este evento novamente</button>
+          @if (canRetry() && submittedCommand()) {
+            <button matButton="filled" (click)="retry()">Tentar novamente</button>
           }
           <button matButton (click)="submitAnother()">Novo lançamento</button>
         </div>

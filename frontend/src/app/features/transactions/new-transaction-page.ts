@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
@@ -12,7 +12,6 @@ import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
 import * as TransactionsActions from './state/transactions.actions';
 import {
-  selectProcessing,
   selectSubmissionError,
   selectSubmissionResult,
   selectSubmissionStatus,
@@ -32,10 +31,14 @@ export class NewTransactionPage implements OnInit {
   readonly accounts = this.store.selectSignal(selectAccounts);
   readonly status = this.store.selectSignal(selectSubmissionStatus);
   readonly submitting = this.store.selectSignal(selectSubmitting);
-  readonly processing = this.store.selectSignal(selectProcessing);
   readonly result = this.store.selectSignal(selectSubmissionResult);
   readonly error = this.store.selectSignal(selectSubmissionError);
   readonly submittedCommand = this.store.selectSignal(selectSubmittedCommand);
+  readonly canRetry = computed(() => {
+    const code = this.error()?.code ?? '';
+
+    return code === 'NETWORK_ERROR' || code.startsWith('HTTP_5');
+  });
   readonly initialAccountId = input('');
   readonly eventId = signal(crypto.randomUUID());
 

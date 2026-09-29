@@ -8,11 +8,7 @@ import { TransactionAccepted } from '../models/transaction-event';
 export class TransactionsApi {
   private readonly http = inject(HttpClient);
 
-  enqueue(command: ProcessTransactionCommand): Observable<TransactionAccepted> {
+  process(command: ProcessTransactionCommand): Observable<TransactionAccepted> {
     return this.http.post<TransactionAccepted>('/api/transactions', command);
-  }
-
-  getStatus(eventId: string): Observable<TransactionAccepted> {
-    return this.http.get<TransactionAccepted>(`/api/transactions/${eventId}`);
   }
 }

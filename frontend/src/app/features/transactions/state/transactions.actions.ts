@@ -6,10 +6,6 @@ export const submitTransaction = createAction(
   '[Transaction form] Submit',
   props<{ command: ProcessTransactionCommand }>(),
 );
-export const transactionAccepted = createAction(
-  '[Transaction form] Accepted',
-  props<{ result: TransactionAccepted }>(),
-);
 export const transactionResolved = createAction(
   '[Transaction form] Resolved',
   props<{ result: TransactionAccepted }>(),
@@ -17,9 +13,5 @@ export const transactionResolved = createAction(
 export const submitTransactionFailure = createAction(
   '[Transaction form] Failure',
   props<{ message: string; code: string }>(),
-);
-export const transactionPollingTimedOut = createAction(
-  '[Transaction form] Polling timed out',
-  props<{ eventId: string }>(),
 );
 export const clearTransactionResult = createAction('[Transaction form] Clear');

@@ -98,19 +98,39 @@ Clean Architecture com DDD tático. As dependências apontam para dentro:
 | `FinancialTransactions.Worker` | Consome a fila e atualiza os saldos |
 | `frontend` | Angular + NgRx: contas, extrato e lançamentos |
 
-**Fluxo de um lançamento (assíncrono):**
+**Fluxo de um lançamento (síncrono, como o enunciado pede):**
 
 ```
 POST /api/transactions
-   └─ grava o evento como PENDING no PostgreSQL e publica na fila (RabbitMQ)  ──►  202 Accepted
-                                                                                     │
-                            o worker bloqueia a conta, aplica o crédito/débito e grava
-                            saldo + histórico na mesma transação                    │
-                                                                                     ▼
-GET /api/transactions/{eventId}  ◄── PROCESSED (com o lançamento) ou REJECTED (com o motivo)
+   └─ valida o payload, bloqueia a conta (FOR UPDATE) e grava saldo + histórico
+      na mesma transação                                                    ──►  201 (novo)
+                                                                                  200 (evento já processado)
+                                                                                  422 (saldo insuficiente)
+                                                                                  404 (conta inexistente)
 ```
 
+**Diferencial — processamento assíncrono (RabbitMQ):** o mesmo evento pode ser enviado para
+`POST /api/transactions/async`. A API grava como `PENDING`, publica na fila e responde `202`; um
+**worker separado** atualiza o saldo e o resultado é consultado em `GET /api/transactions/{eventId}`
+(`PROCESSED` ou `REJECTED`).
+
 ---
+
+## API
+
+| Método e rota | Resultado |
+|---|---|
+| `GET /api/accounts` | Contas com saldo consolidado |
+| `GET /api/accounts/summary` | Resumo: contas, saldo total e lançamentos |
+| `GET /api/accounts/{id}/transactions?page=&pageSize=&type=&from=&to=` | Extrato paginado, com filtros |
+| `POST /api/transactions` | Processa o evento e atualiza o saldo (201 / 200 / 422 / 404) |
+| `POST /api/transactions/async` | Diferencial: enfileira para o worker (202) |
+| `GET /api/transactions/{eventId}` | Status de um evento enfileirado |
+| `GET /health` · `GET /health/ready` | Liveness e readiness |
+
+O **Swagger** em http://localhost:8080/swagger traz o contrato completo, com exemplos prontos para
+testar, e os erros de negócio voltam como `ProblemDetails` com um `code`
+(`INSUFFICIENT_FUNDS`, `DUPLICATE_EVENT`), que o frontend traduz em mensagem.
 
 ## Stack e diferenciais
 
@@ -123,20 +143,20 @@ GET /api/transactions/{eventId}  ◄── PROCESSED (com o lançamento) ou REJE
 | Clean Architecture / DDD | Camadas com dependências para dentro e agregado protegendo invariantes |
 | Docker | Um `docker compose up` sobe frontend, API, worker, banco, cache, fila e identidade |
 | **Redis** | Cache com invalidação por versão e limite de requisições (30/10s) |
-| **RabbitMQ** | Processamento assíncrono do saldo por um worker separado |
+| **RabbitMQ** | Processamento assíncrono do saldo por um worker separado (endpoint `/async`) |
 | **Keycloak (OIDC/OAuth2)** | Login com PKCE no frontend e validação de JWT na API |
 | **Observabilidade** | Logs estruturados (Serilog) e health checks de liveness e readiness |
 
 ## Testes
 
 ```bash
-dotnet test backend/FinancialTransactions.slnx   # 49 no backend
+dotnet test backend/FinancialTransactions.slnx   # 54 no backend
 cd frontend
-npm test -- --watch=false                        # 43 no frontend (Vitest)
+npm test -- --watch=false                        # 40 no frontend
 npm run e2e                                      # 6 ponta a ponta (Playwright)
 ```
 
-**98 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
+**100 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
 cobrem os cenários críticos: saldo insuficiente, evento duplicado e débitos concorrentes. Os testes
 ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → lançamento com
 sucesso → rejeição por saldo insuficiente. Os testes e2e precisam da aplicação no ar
@@ -146,9 +166,11 @@ sucesso → rejeição por saldo insuficiente. Os testes e2e precisam da aplica�
 
 ## Decisões e trade-offs
 
-- **Processamento assíncrono:** o RabbitMQ desacopla o recebimento da atualização do saldo, o que dá
-  vazão e resiliência, mas exige expor o estado `PENDING` e consultar o resultado. O worker também
-  reprocessa eventos pendentes antigos, cobrindo falhas de publicação.
+- **Síncrono por padrão:** o lançamento grava saldo e histórico na mesma transação e responde na hora —
+  é o fluxo que o enunciado pede, e dá o feedback imediato de sucesso, duplicidade e saldo insuficiente.
+  Como **diferencial**, o mesmo evento pode ser enfileirado (`/async`): desacopla e dá vazão, ao custo de
+  consistência eventual e de expor o estado `PENDING`. O worker também reprocessa eventos pendentes
+  antigos, cobrindo falhas de publicação.
 - **Cache com invalidação por versão:** cada extrato é cacheado sob uma versão da conta; ao lançar, a
   versão muda e as entradas antigas expiram sozinhas — sem varrer chaves nem servir dado velho.
 - **Autenticação por configuração:** com o Keycloak presente, todas as rotas exigem usuário

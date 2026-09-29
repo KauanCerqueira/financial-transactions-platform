@@ -13,26 +13,61 @@ namespace FinancialTransactions.Api.Controllers;
 [Route("api/transactions")]
 [EnableRateLimiting("transactions")]
 public sealed class TransactionsController(
+    IProcessTransactionUseCase processTransaction,
     IEnqueueTransactionUseCase enqueueTransaction,
     IGetTransactionEventUseCase getTransactionEvent,
     ITransactionQueue queue) : ControllerBase
 {
     [HttpPost]
     [SwaggerOperation(
-        Summary = "Enfileira um evento financeiro para processamento assíncrono",
-        Description = "Recebe um crédito ou débito e enfileira para o worker atualizar o saldo. É idempotente pelo eventId: repetir o mesmo evento devolve o status já conhecido, sem duplicar.")]
+        Summary = "Processa um evento financeiro (crédito ou débito)",
+        Description = "Atualiza o saldo na hora. É idempotente pelo eventId: repetir o mesmo evento devolve o lançamento já processado, sem movimentar o saldo de novo.")]
     [SwaggerRequestExample(typeof(ProcessTransactionRequest), typeof(ProcessTransactionRequestExample))]
-    [SwaggerResponse(StatusCodes.Status202Accepted, "Evento recebido e enfileirado (PENDING).", typeof(TransactionAcceptedResponse))]
-    [SwaggerResponse(StatusCodes.Status200OK, "Evento já enfileirado ou já processado.", typeof(TransactionAcceptedResponse))]
+    [SwaggerResponse(StatusCodes.Status201Created, "Evento processado e saldo atualizado.", typeof(TransactionAcceptedResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, "Evento já processado anteriormente (idempotência).", typeof(TransactionAcceptedResponse))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Payload inválido: tipo, valor ou data.")]
-    [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Fila de processamento indisponível.")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Conta não encontrada.")]
+    [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Regra de negócio violada, como saldo insuficiente.")]
     public async Task<ActionResult<TransactionAcceptedResponse>> Create(
         [FromBody] ProcessTransactionRequest request,
         CancellationToken cancellationToken)
     {
-        if (!TransactionTypeMapper.TryParse(request.Type, out var type))
+        var command = BuildCommand(request);
+
+        if (command is null)
         {
-            ModelState.AddModelError(nameof(request.Type), "O tipo deve ser CREDIT ou DEBIT.");
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await processTransaction.ProcessAsync(command, cancellationToken);
+        var response = new TransactionAcceptedResponse(
+            result.Transaction.EventId,
+            TransactionEventStatus.Processed,
+            null,
+            result.Transaction,
+            result.AlreadyProcessed);
+
+        return result.AlreadyProcessed
+            ? Ok(response)
+            : StatusCode(StatusCodes.Status201Created, response);
+    }
+
+    [HttpPost("async")]
+    [SwaggerOperation(
+        Summary = "Enfileira um evento para processamento assíncrono (RabbitMQ)",
+        Description = "Diferencial: o evento é gravado como pendente e publicado na fila; o worker atualiza o saldo depois. Consulte o resultado em GET /api/transactions/{eventId}.")]
+    [SwaggerResponse(StatusCodes.Status202Accepted, "Evento recebido e enfileirado (PENDING).", typeof(TransactionAcceptedResponse))]
+    [SwaggerResponse(StatusCodes.Status200OK, "Evento já enfileirado ou já processado.", typeof(TransactionAcceptedResponse))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Payload inválido: tipo, valor ou data.")]
+    [SwaggerResponse(StatusCodes.Status503ServiceUnavailable, "Fila de processamento indisponível.")]
+    public async Task<ActionResult<TransactionAcceptedResponse>> CreateAsync(
+        [FromBody] ProcessTransactionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = BuildCommand(request);
+
+        if (command is null)
+        {
             return ValidationProblem(ModelState);
         }
 
@@ -43,13 +78,6 @@ public sealed class TransactionsController(
                 detail: "A fila de transações não está configurada.",
                 statusCode: StatusCodes.Status503ServiceUnavailable);
         }
-
-        var command = new ProcessTransactionCommand(
-            request.EventId,
-            request.AccountId,
-            type,
-            request.Amount,
-            request.OccurredAt);
 
         var result = await enqueueTransaction.EnqueueAsync(command, cancellationToken);
         var response = new TransactionAcceptedResponse(
@@ -66,7 +94,7 @@ public sealed class TransactionsController(
 
     [HttpGet("{eventId:guid}")]
     [SwaggerOperation(
-        Summary = "Consulta o status de um evento",
+        Summary = "Consulta o status de um evento enfileirado",
         Description = "PENDING enquanto o worker não processar; PROCESSED com o lançamento, ou REJECTED com o motivo.")]
     [SwaggerResponse(StatusCodes.Status200OK, "Status atual do evento.", typeof(TransactionAcceptedResponse))]
     [SwaggerResponse(StatusCodes.Status404NotFound, "Evento desconhecido.")]
@@ -87,5 +115,21 @@ public sealed class TransactionsController(
             result.RejectionCode,
             result.Transaction,
             result.AlreadyProcessed));
+    }
+
+    private ProcessTransactionCommand? BuildCommand(ProcessTransactionRequest request)
+    {
+        if (!TransactionTypeMapper.TryParse(request.Type, out var type))
+        {
+            ModelState.AddModelError(nameof(request.Type), "O tipo deve ser CREDIT ou DEBIT.");
+            return null;
+        }
+
+        return new ProcessTransactionCommand(
+            request.EventId,
+            request.AccountId,
+            type,
+            request.Amount,
+            request.OccurredAt);
     }
 }

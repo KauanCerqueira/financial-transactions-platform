@@ -1,29 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { Action } from '@ngrx/store';
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  concat,
-  concatWith,
-  defer,
-  map,
-  mergeMap,
-  of,
-  switchMap,
-  take,
-  takeWhile,
-  tap,
-  timer,
-} from 'rxjs';
+import { catchError, defer, map, mergeMap, of } from 'rxjs';
 import { TransactionsApi } from '../../../core/api/transactions-api';
 import { ApiError } from '../../../core/models/api-error';
 import { forgetPendingTransaction, rememberPendingTransaction } from '../pending-transaction';
 import * as TransactionsActions from './transactions.actions';
 
-const PollIntervalMs = 700;
-const MaxPolls = 40;
+const FirstClientErrorStatus = 400;
+const FirstServerErrorStatus = 500;
 
 @Injectable()
 export class TransactionsEffects {
@@ -36,41 +20,26 @@ export class TransactionsEffects {
       mergeMap(({ command }) =>
         defer(() => {
           rememberPendingTransaction(command);
-          return this.transactionsApi.enqueue(command);
+          return this.transactionsApi.process(command);
         }).pipe(
-          mergeMap((accepted) =>
-            concat(
-              of(TransactionsActions.transactionAccepted({ result: accepted })).pipe(
-                tap(() => {
-                  if (accepted.status !== 'PENDING') {
-                    forgetPendingTransaction();
-                  }
-                }),
-              ),
-              accepted.status === 'PENDING' ? this.pollStatus(accepted.eventId) : EMPTY,
-            ),
-          ),
-          catchError((error: ApiError) =>
-            of(TransactionsActions.submitTransactionFailure({ message: error.message, code: error.code })),
-          ),
+          map((result) => {
+            forgetPendingTransaction();
+            return TransactionsActions.transactionResolved({ result });
+          }),
+          catchError((error: ApiError) => {
+            if (isClientError(error)) {
+              forgetPendingTransaction();
+            }
+
+            return of(TransactionsActions.submitTransactionFailure({ message: error.message, code: error.code }));
+          }),
         ),
       ),
     ),
   );
+}
 
-  private pollStatus(eventId: string): Observable<Action> {
-    return timer(PollIntervalMs, PollIntervalMs).pipe(
-      take(MaxPolls),
-      switchMap(() => this.transactionsApi.getStatus(eventId)),
-      takeWhile((result) => result.status === 'PENDING', true),
-      map((result) => {
-        if (result.status !== 'PENDING') {
-          forgetPendingTransaction();
-        }
-
-        return TransactionsActions.transactionResolved({ result });
-      }),
-      concatWith(of(TransactionsActions.transactionPollingTimedOut({ eventId }))),
-    );
-  }
+// Erros de cliente (regra de negócio ou validação) não se resolvem ao reenviar; falhas de rede ou do servidor, sim.
+function isClientError(error: ApiError): boolean {
+  return error.status >= FirstClientErrorStatus && error.status < FirstServerErrorStatus;
 }

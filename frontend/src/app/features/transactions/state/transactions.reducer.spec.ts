@@ -2,15 +2,14 @@ import { TransactionAccepted } from '../../../core/models/transaction-event';
 import * as TransactionsActions from './transactions.actions';
 import { transactionsReducer } from './transactions.reducer';
 
-const command = { eventId: 'e1', accountId: 'a1', type: 'CREDIT' as const, amount: 100, occurredAt: '2026-01-30T10:00:00Z' };
-
-const pending: TransactionAccepted = {
+const command = {
   eventId: 'e1',
-  status: 'PENDING',
-  rejectionCode: null,
-  transaction: null,
-  alreadyProcessed: false,
+  accountId: 'a1',
+  type: 'CREDIT' as const,
+  amount: 100,
+  occurredAt: '2026-01-30T10:00:00Z',
 };
+
 const processed: TransactionAccepted = {
   eventId: 'e1',
   status: 'PROCESSED',
@@ -27,28 +26,22 @@ const processed: TransactionAccepted = {
   },
   alreadyProcessed: false,
 };
+
 const rejected: TransactionAccepted = {
   eventId: 'e1',
   status: 'REJECTED',
   rejectionCode: 'INSUFFICIENT_FUNDS',
   transaction: null,
-  alreadyProcessed: true,
+  alreadyProcessed: false,
 };
 
 describe('transactionsReducer', () => {
-  it('marks submitting on submit', () => {
+  it('stores the command and marks submitting on submit', () => {
     const state = transactionsReducer(undefined, TransactionsActions.submitTransaction({ command }));
 
     expect(state.status).toBe('submitting');
     expect(state.command).toEqual(command);
     expect(state.result).toBeNull();
-  });
-
-  it('marks processing while the queue still has the event pending', () => {
-    const state = transactionsReducer(undefined, TransactionsActions.transactionAccepted({ result: pending }));
-
-    expect(state.status).toBe('processing');
-    expect(state.result).toEqual(pending);
   });
 
   it('marks success when the event is processed', () => {
@@ -69,26 +62,25 @@ describe('transactionsReducer', () => {
     });
   });
 
+  it('stores the failure message', () => {
+    const state = transactionsReducer(
+      undefined,
+      TransactionsActions.submitTransactionFailure({ message: 'Sem conexão', code: 'NETWORK_ERROR' }),
+    );
+
+    expect(state.status).toBe('error');
+    expect(state.error).toEqual({ message: 'Sem conexão', code: 'NETWORK_ERROR' });
+  });
+
   it('clears back to idle', () => {
-    const failed = transactionsReducer(undefined, TransactionsActions.transactionResolved({ result: rejected }));
+    const failed = transactionsReducer(
+      undefined,
+      TransactionsActions.submitTransactionFailure({ message: 'x', code: 'y' }),
+    );
 
     const state = transactionsReducer(failed, TransactionsActions.clearTransactionResult());
 
     expect(state.status).toBe('idle');
     expect(state.error).toBeNull();
-  });
-
-  it('shows a recoverable error when the same event takes too long', () => {
-    const submitted = transactionsReducer(undefined, TransactionsActions.submitTransaction({ command }));
-    const processing = transactionsReducer(submitted, TransactionsActions.transactionAccepted({ result: pending }));
-
-    const timedOut = transactionsReducer(
-      processing,
-      TransactionsActions.transactionPollingTimedOut({ eventId: command.eventId }),
-    );
-
-    expect(timedOut.status).toBe('error');
-    expect(timedOut.command).toEqual(command);
-    expect(timedOut.error?.code).toBe('PROCESSING_TIMEOUT');
   });
 });

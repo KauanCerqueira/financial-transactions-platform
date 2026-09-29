@@ -1,12 +1,12 @@
 import { createReducer, on } from '@ngrx/store';
 import { messageForCode } from '../../../core/models/api-messages';
-import { TransactionAccepted } from '../../../core/models/transaction-event';
 import { ProcessTransactionCommand } from '../../../core/models/transaction';
+import { TransactionAccepted } from '../../../core/models/transaction-event';
 import * as TransactionsActions from './transactions.actions';
 
 export const transactionsFeatureKey = 'transactionForm';
 
-export type SubmissionStatus = 'idle' | 'submitting' | 'processing' | 'success' | 'error';
+export type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 export interface TransactionFormState {
   command: ProcessTransactionCommand | null;
@@ -31,12 +31,6 @@ export const transactionsReducer = createReducer(
     result: null,
     error: null,
   })),
-  on(TransactionsActions.transactionAccepted, (state, { result }) => ({
-    ...state,
-    result,
-    status: result.status === 'PENDING' ? ('processing' as SubmissionStatus) : statusOf(result),
-    error: result.status === 'REJECTED' ? rejectionOf(result) : null,
-  })),
   on(TransactionsActions.transactionResolved, (state, { result }) => ({
     ...state,
     result,
@@ -49,31 +43,11 @@ export const transactionsReducer = createReducer(
     result: null,
     error: { message, code },
   })),
-  on(TransactionsActions.transactionPollingTimedOut, (state, { eventId }) =>
-    state.status === 'processing' && state.command?.eventId === eventId
-      ? {
-          ...state,
-          status: 'error' as SubmissionStatus,
-          error: {
-            code: 'PROCESSING_TIMEOUT',
-            message: 'O processamento está demorando. Consulte novamente este mesmo evento.',
-          },
-        }
-      : state,
-  ),
   on(TransactionsActions.clearTransactionResult, () => initialState),
 );
 
 function statusOf(result: TransactionAccepted): SubmissionStatus {
-  if (result.status === 'PROCESSED') {
-    return 'success';
-  }
-
-  if (result.status === 'REJECTED') {
-    return 'error';
-  }
-
-  return 'processing';
+  return result.status === 'PROCESSED' ? 'success' : 'error';
 }
 
 function rejectionOf(result: TransactionAccepted): { message: string; code: string } {
