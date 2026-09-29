@@ -2,6 +2,7 @@ using FinancialTransactions.Api.Contracts;
 using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Application.Features.Transactions;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace FinancialTransactions.Api.Controllers;
 
@@ -10,10 +11,14 @@ namespace FinancialTransactions.Api.Controllers;
 public sealed class TransactionsController(IProcessTransactionUseCase processTransaction) : ControllerBase
 {
     [HttpPost]
-    [ProducesResponseType<TransactionDto>(StatusCodes.Status201Created)]
-    [ProducesResponseType<TransactionDto>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    [SwaggerOperation(
+        Summary = "Processa um evento financeiro",
+        Description = "Recebe um crédito ou débito. É idempotente pelo eventId: repetir o mesmo evento devolve o lançamento já processado, sem movimentar o saldo de novo.")]
+    [SwaggerResponse(StatusCodes.Status201Created, "Evento processado e saldo atualizado.", typeof(TransactionDto))]
+    [SwaggerResponse(StatusCodes.Status200OK, "Evento já processado anteriormente (idempotência).", typeof(TransactionDto))]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Payload inválido: tipo, valor ou data.")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "Conta não encontrada.")]
+    [SwaggerResponse(StatusCodes.Status422UnprocessableEntity, "Regra de negócio violada, como saldo insuficiente.")]
     public async Task<ActionResult<TransactionDto>> Create(
         [FromBody] ProcessTransactionRequest request,
         CancellationToken cancellationToken)
