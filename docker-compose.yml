@@ -36,6 +36,18 @@ services:
       timeout: 5s
       retries: 12
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: "8080"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./infra/keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro
+
   api:
     build:
       context: ./backend
@@ -45,6 +57,10 @@ services:
       ConnectionStrings__Redis: "redis:6379"
       RabbitMq__Uri: "amqp://guest:guest@rabbitmq:5672"
       RabbitMq__QueueName: "transactions"
+      Authentication__Authority: "http://keycloak:8080/realms/fraga"
+      Authentication__Audience: "financial-transactions-api"
+      Authentication__Issuers__0: "http://keycloak:8080/realms/fraga"
+      Authentication__Issuers__1: "http://localhost:8081/realms/fraga"
       ASPNETCORE_ENVIRONMENT: Production
       Observability__ElasticsearchUri: "${ELASTICSEARCH_URI:-}"
     ports:

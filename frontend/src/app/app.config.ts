@@ -5,6 +5,7 @@ import { MatPaginatorIntl } from '@angular/material/paginator';
 import { provideEffects } from '@ngrx/effects';
 import { provideState, provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
+import { authInterceptor, provideAuth, withAppInitializerAuthCheck } from 'angular-auth-oidc-client';
 import { apiErrorInterceptor } from './core/interceptors/api-error.interceptor';
 import { PtBrPaginatorIntl } from './core/i18n/pt-br-paginator';
 import { AccountsEffects } from './features/accounts/state/accounts.effects';
@@ -19,7 +20,24 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withInterceptors([apiErrorInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor(), apiErrorInterceptor])),
+
+    provideAuth(
+      {
+        config: {
+          authority: 'http://localhost:8081/realms/fraga',
+          redirectUrl: window.location.origin,
+          postLogoutRedirectUri: window.location.origin,
+          clientId: 'financial-app',
+          scope: 'openid profile email',
+          responseType: 'code',
+          silentRenew: true,
+          useRefreshToken: true,
+          secureRoutes: ['/api'],
+        },
+      },
+      withAppInitializerAuthCheck(),
+    ),
 
     provideStore(),
     provideState(accountsFeatureKey, accountsReducer),

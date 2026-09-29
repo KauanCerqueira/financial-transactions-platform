@@ -8,9 +8,12 @@ using FinancialTransactions.Application;
 using FinancialTransactions.Infrastructure;
 using FinancialTransactions.Infrastructure.Persistence;
 using FinancialTransactions.Infrastructure.Messaging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
@@ -82,6 +85,29 @@ builder.Services
     .AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("postgres", tags: ["ready"]);
 
+var authenticationAuthority = builder.Configuration["Authentication:Authority"];
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = authenticationAuthority;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidAudience = builder.Configuration["Authentication:Audience"],
+            ValidIssuers = builder.Configuration.GetSection("Authentication:Issuers").Get<string[]>()
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    // Protege todas as rotas quando o Keycloak está configurado; sem ele, o ambiente fica aberto (dev/testes).
+    if (!string.IsNullOrWhiteSpace(authenticationAuthority))
+    {
+        options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    }
+});
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -110,6 +136,8 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
 app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -120,12 +148,12 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 {
     Predicate = _ => false,
     ResponseWriter = HealthCheckResponseWriter.WriteAsync
-});
+}).AllowAnonymous();
 app.MapHealthChecks("/health/ready", new HealthCheckOptions
 {
     Predicate = registration => registration.Tags.Contains("ready"),
     ResponseWriter = HealthCheckResponseWriter.WriteAsync
-});
+}).AllowAnonymous();
 
 await app.ApplyMigrationsAndSeedAsync();
 
