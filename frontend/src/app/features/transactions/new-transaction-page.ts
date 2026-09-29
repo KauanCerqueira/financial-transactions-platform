@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
@@ -35,6 +35,8 @@ export class NewTransactionPage implements OnInit {
   readonly result = this.store.selectSignal(selectSubmissionResult);
   readonly error = this.store.selectSignal(selectSubmissionError);
   readonly submittedCommand = this.store.selectSignal(selectSubmittedCommand);
+  readonly initialAccountId = input('');
+  readonly eventId = signal(crypto.randomUUID());
 
   readonly form = this.formBuilder.nonNullable.group({
     accountId: ['', Validators.required],
@@ -42,6 +44,16 @@ export class NewTransactionPage implements OnInit {
     amount: [0, [Validators.required, Validators.min(0.01)]],
     occurredAt: [this.nowForInput(), Validators.required],
   });
+
+  constructor() {
+    effect(() => {
+      const accountId = this.initialAccountId();
+      if (accountId) this.form.controls.accountId.setValue(accountId);
+    });
+    effect(() => {
+      if (this.status() === 'success') this.store.dispatch(AccountsActions.loadAccounts());
+    });
+  }
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());
@@ -69,7 +81,7 @@ export class NewTransactionPage implements OnInit {
 
     const { accountId, type, amount, occurredAt } = this.form.getRawValue();
     const command: ProcessTransactionCommand = {
-      eventId: crypto.randomUUID(),
+      eventId: this.eventId(),
       accountId,
       type,
       amount: Number(amount),
@@ -80,10 +92,13 @@ export class NewTransactionPage implements OnInit {
   }
 
   submitAnother(): void {
+    this.eventId.set(crypto.randomUUID());
     forgetPendingTransaction();
     this.store.dispatch(TransactionsActions.clearTransactionResult());
     this.store.dispatch(AccountsActions.loadAccounts());
     this.form.patchValue({ amount: 0, occurredAt: this.nowForInput() });
+    this.form.markAsUntouched();
+    this.form.markAsPristine();
   }
 
   retry(): void {

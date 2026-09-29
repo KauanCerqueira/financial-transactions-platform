@@ -1,14 +1,14 @@
-import { Component, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Store } from '@ngrx/store';
-import { CountUpDirective } from '../../shared/directives/count-up.directive';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
 import { DateTimeBrPipe } from '../../shared/pipes/date-time-br.pipe';
 import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
+import { selectSubmissionResult } from '../transactions/state/transactions.selectors';
 import * as StatementActions from './state/statement.actions';
 import {
   selectStatementError,
@@ -21,13 +21,14 @@ import {
 
 @Component({
   selector: 'app-statement-page',
-  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateTimeBrPipe, CountUpDirective, Icon],
+  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateTimeBrPipe, Icon],
   templateUrl: './statement-page.html',
 })
 export class StatementPage implements OnInit {
   private readonly store = inject(Store);
 
   readonly accountId = input.required<string>();
+  readonly standalone = input(false);
 
   private readonly accounts = this.store.selectSignal(selectAccounts);
   readonly account = computed(
@@ -40,10 +41,18 @@ export class StatementPage implements OnInit {
   readonly totalItems = this.store.selectSignal(selectStatementTotalItems);
   readonly status = this.store.selectSignal(selectStatementStatus);
   readonly error = this.store.selectSignal(selectStatementError);
+  private readonly submissionResult = this.store.selectSignal(selectSubmissionResult);
+  private readonly recordedTransactionId = computed(() => this.submissionResult()?.transaction?.id);
+
+  constructor() {
+    effect(() => {
+      this.recordedTransactionId();
+      this.load(1, 5);
+    });
+  }
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());
-    this.load(1, 10);
   }
 
   onPage(event: PageEvent): void {
@@ -55,6 +64,8 @@ export class StatementPage implements OnInit {
   }
 
   private load(page: number, pageSize: number): void {
-    this.store.dispatch(StatementActions.loadStatement({ accountId: this.accountId(), page, pageSize }));
+    this.store.dispatch(
+      StatementActions.loadStatement({ accountId: this.accountId(), page, pageSize }),
+    );
   }
 }

@@ -2,115 +2,248 @@
   display: block;
   min-height: 100%;
 }
-
 .shell {
-  display: flex;
-  flex-direction: column;
   min-height: 100dvh;
 }
-
-.shell__bar {
+.shell__sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 220px;
+  background: #f8fafb;
+  border-right: 1px solid var(--fraga-line);
+  z-index: 10;
+  overflow: hidden;
+}
+.brand {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
-  height: 64px;
+  gap: 9px;
+  height: 86px;
   padding: 0 24px;
-  background: var(--fraga-graphite-950);
-  border-bottom: 1px solid var(--fraga-line-dark);
-}
-
-.shell__spacer {
-  flex: 1;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
   text-decoration: none;
+  color: #0b111b;
 }
-
 .brand__mark {
+  display: block;
+  font-size: 30px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  font-size: 18px;
-  color: #ffffff;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: 0.035em;
 }
-
-.brand__dot {
-  color: var(--fraga-magenta);
+.brand__caption {
+  display: block;
+  font-size: 6px;
   font-weight: 700;
+  letter-spacing: 0.22em;
+  margin-top: 4px;
 }
-
-.brand__product {
-  font-size: 14px;
-  letter-spacing: 0.02em;
-  color: #b9b9bd;
-}
-
-.shell__body {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-
-.shell__nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 216px;
+.brand__symbol {
+  width: 22px;
+  height: 32px;
   flex-shrink: 0;
-  padding: 24px 12px;
-  background: var(--fraga-graphite-900);
-  border-right: 1px solid var(--fraga-line-dark);
-
-  a {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: var(--fraga-radius-sm);
-    font-size: 15px;
-    font-weight: 500;
-    color: #cfcfd3;
-    text-decoration: none;
-    transition: background 160ms ease, color 160ms ease;
-  }
-
-  a:hover {
-    background: #303035;
-    color: #ffffff;
-  }
-
-  a.is-active {
-    background: var(--fraga-magenta);
-    color: #ffffff;
-  }
+  transform: skew(-29deg);
+  background: linear-gradient(to bottom, #ed0015 0 45%, transparent 45% 53%, #ed0015 53% 100%);
 }
-
-.shell__content {
-  flex: 1;
+.shell__nav {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+  padding: 8px 14px 8px 0;
+}
+.shell__nav a,
+.shell__nav button {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  min-height: 44px;
+  padding: 0 22px;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--fraga-ink);
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0 7px 7px 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.shell__nav app-icon {
+  width: 23px;
+  height: 23px;
+}
+.shell__nav a:hover,
+.shell__nav button:hover {
+  background: #edf0f3;
+}
+.shell__nav a.is-active {
+  color: var(--fraga-red);
+  background: #f7eeee;
+  border-left-color: var(--fraga-red);
+}
+.sidebar-art {
+  position: absolute;
+  inset: 245px 0 0;
+  background: url('/images/automotive-sidebar.webp') 32% bottom / auto 100% no-repeat;
+}
+.sidebar-art p {
+  position: absolute;
+  left: 36px;
+  bottom: 34px;
+  margin: 0;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.32;
+}
+.shell__body {
+  margin-left: 220px;
   min-width: 0;
-  padding: 32px;
-  overflow: auto;
 }
-
-@media (max-width: 720px) {
+.shell__bar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--fraga-line);
+  background: #fafbfc url('/images/automotive-header.webp') right 48% / 100% auto no-repeat;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 420px;
+  max-width: 50%;
+  border: 1px solid #dce1e8;
+  background: #f8fafbe8;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: #536077;
+}
+.search input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.search:focus-within {
+  outline: 2px solid var(--fraga-red);
+  outline-offset: 2px;
+}
+.session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+}
+.session__avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #e9edf2;
+  color: #293545;
+  border-radius: 50%;
+}
+.session__label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.session__label small {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 400;
+}
+.session__exit {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
+  color: inherit;
+  border: 0;
+  background: #11192380;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.shell__content {
+  padding: 20px 28px;
+}
+@media (max-width: 1100px) {
+  .shell__sidebar {
+    width: 185px;
+  }
+  .shell__body {
+    margin-left: 185px;
+  }
+  .brand {
+    padding: 0 18px;
+  }
+  .brand__mark {
+    font-size: 26px;
+  }
+  .brand__caption {
+    font-size: 5px;
+  }
+  .shell__content {
+    padding: 22px;
+  }
+}
+@media (max-width: 760px) {
+  .shell__sidebar {
+    position: static;
+    width: auto;
+    border-right: 0;
+  }
+  .brand {
+    height: 66px;
+    padding-left: 20px;
+  }
+  .shell__nav {
+    display: flex;
+    padding: 0 12px 8px;
+    gap: 4px;
+  }
+  .shell__nav a,
+  .shell__nav button {
+    padding: 0 12px;
+    gap: 7px;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 5px;
+    font-size: 12px;
+  }
+  .shell__nav a.is-active {
+    border-bottom-color: var(--fraga-red);
+  }
+  .sidebar-art {
+    display: none;
+  }
+  .shell__body {
+    margin-left: 0;
+  }
   .shell__bar {
     padding: 0 16px;
+    gap: 12px;
   }
-
-  .shell__body {
-    flex-direction: column;
+  .search {
+    max-width: none;
+    flex: 1;
   }
-
-  .shell__nav {
-    flex-direction: row;
-    width: auto;
-    padding: 8px 12px;
-    overflow-x: auto;
+  .session__label,
+  .session__avatar {
+    display: none;
   }
-
   .shell__content {
     padding: 20px 16px;
   }

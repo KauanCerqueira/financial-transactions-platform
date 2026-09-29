@@ -2,32 +2,30 @@
   <header class="page__head">
     <div>
       <h1>Contas</h1>
-      <p class="page__subtitle">Saldo consolidado das contas dos clientes.</p>
+      <p class="page__subtitle">Gerencie suas contas e visualize os saldos consolidados.</p>
     </div>
-    <button matButton (click)="reload()" [disabled]="loading()">
-      <app-icon name="refresh" class="icon-gap" />Atualizar
-    </button>
+    <a
+      matButton="filled"
+      routerLink="/transactions/new"
+      [queryParams]="{ accountId: selectedAccountId() }"
+      ><app-icon name="add" class="icon-gap" />Nova Transação</a
+    >
   </header>
-
   @switch (status()) {
     @case ('loading') {
-      <div class="rows" aria-hidden="true">
+      <div class="rows" role="status" aria-label="Carregando contas">
         @for (row of [1, 2, 3]; track row) {
-          <div class="skeleton"></div>
+          <div class="skeleton" aria-hidden="true"></div>
         }
       </div>
     }
-
     @case ('error') {
       <div class="state state--error" role="alert">
         <p class="state__title"><app-icon name="alert" />Não foi possível carregar as contas</p>
         <p class="state__text">{{ error() }}</p>
-        <button matButton="filled" (click)="reload()">
-          <app-icon name="refresh" class="icon-gap" />Tentar de novo
-        </button>
+        <button matButton="filled" (click)="reload()">Tentar de novo</button>
       </div>
     }
-
     @default {
       @if (accounts().length === 0) {
         <div class="state">
@@ -37,33 +35,66 @@
       } @else {
         <div class="summary">
           <div class="summary__item">
-            <span class="summary__label">Saldo total</span>
-            <span class="summary__value value" [appCountUp]="totalBalance()"></span>
+            <span class="summary__icon"><app-icon name="bank" /></span>
+            <div>
+              <span class="summary__label">Total em Contas</span
+              ><span class="summary__value">{{ totalBalance() | brl }}</span
+              ><span class="summary__hint">Saldo consolidado de todas as contas</span>
+            </div>
           </div>
           <div class="summary__item">
-            <span class="summary__label">Contas</span>
-            <span class="summary__value value">{{ accounts().length }}</span>
+            <span class="summary__icon"><app-icon name="card" /></span>
+            <div>
+              <span class="summary__label">Contas Cadastradas</span
+              ><span class="summary__value">{{ accounts().length }}</span
+              ><span class="summary__hint">Disponíveis para crédito e débito</span>
+            </div>
+            <button
+              class="icon-button summary__refresh"
+              aria-label="Atualizar contas"
+              (click)="reload()"
+              [disabled]="loading()"
+            >
+              <app-icon name="refresh" />
+            </button>
           </div>
         </div>
-
-        <div class="card">
-          <table class="table">
+        <div class="card table-scroll" tabindex="0" role="region" aria-label="Contas cadastradas">
+          <table class="table accounts-table">
             <thead>
               <tr>
-                <th scope="col">Titular</th>
-                <th scope="col" class="table__number">Saldo</th>
-                <th scope="col" class="table__action"><span class="visually-hidden">Ações</span></th>
+                <th scope="col">Titular da Conta</th>
+                <th scope="col">ID da Conta</th>
+                <th scope="col" class="table__number">Saldo Atual</th>
+                <th scope="col" class="table__action">Ações</th>
               </tr>
             </thead>
             <tbody>
-              @for (account of accounts(); track account.id) {
-                <tr>
-                  <td>{{ account.holderName }}</td>
-                  <td class="table__number value">{{ account.balance | brl }}</td>
+              @for (account of filteredAccounts(); track account.id) {
+                <tr [class.is-selected]="selectedAccountId() === account.id">
+                  <td>
+                    <strong>{{ account.holderName }}</strong
+                    ><span class="table__secondary">Conta financeira</span>
+                  </td>
+                  <td class="identifier">{{ account.id }}</td>
+                  <td class="table__number amount amount--credit">{{ account.balance | brl }}</td>
                   <td class="table__action">
-                    <a matButton [routerLink]="['/accounts', account.id, 'statement']">
-                      Ver extrato<app-icon name="chevron-right" class="icon-gap-left" />
-                    </a>
+                    <a
+                      class="button-outline"
+                      [routerLink]="
+                        hasTransactionPanel()
+                          ? ['/transactions/new']
+                          : ['/accounts', account.id, 'statement']
+                      "
+                      [queryParams]="hasTransactionPanel() ? { accountId: account.id } : {}"
+                      >Ver extrato<app-icon name="chevron-right"
+                    /></a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="empty-search">
+                    Nenhuma conta encontrada para “{{ searchText() }}”.
                   </td>
                 </tr>
               }

@@ -1,9 +1,12 @@
-<section class="page">
+<section class="transaction-content">
   <header class="page__head">
     <div>
-      <h1>Lançar transação</h1>
-      <p class="page__subtitle">Registre um crédito ou débito em uma conta.</p>
+      <h2>Nova Transação</h2>
+      <p class="page__subtitle">Realize um novo lançamento de crédito ou débito.</p>
     </div>
+    <a class="icon-button" [routerLink]="['/accounts']" aria-label="Fechar nova transação"
+      ><app-icon name="close"
+    /></a>
   </header>
 
   @if (status() === 'success' && result(); as outcome) {
@@ -48,7 +51,9 @@
   } @else if (status() === 'error') {
     @if (error(); as failure) {
       <div class="state state--error" role="alert">
-        <p class="state__title"><app-icon name="alert" />Não foi possível lançar ({{ failure.code }})</p>
+        <p class="state__title">
+          <app-icon name="alert" />Não foi possível lançar ({{ failure.code }})
+        </p>
         <p class="state__text">{{ failure.message }}</p>
         <div class="result__actions">
           @if (result()?.status !== 'REJECTED' && submittedCommand()) {
@@ -61,11 +66,13 @@
   } @else {
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
       <div class="field">
-        <label class="field__label" for="accountId">Conta</label>
+        <label class="field__label" for="accountId">Conta <span class="required">*</span></label>
         <select id="accountId" formControlName="accountId">
           <option value="" disabled>Selecione a conta</option>
           @for (account of accounts(); track account.id) {
-            <option [value]="account.id">{{ account.holderName }} — {{ account.balance | brl }}</option>
+            <option [value]="account.id">
+              {{ account.holderName }} — {{ account.balance | brl }}
+            </option>
           }
         </select>
         @if (form.controls.accountId.touched && form.controls.accountId.invalid) {
@@ -74,29 +81,31 @@
       </div>
 
       <div class="field">
-        <span class="field__label">Tipo</span>
+        <span class="field__label">Tipo de Transação <span class="required">*</span></span>
         <div class="segmented" role="group" aria-label="Tipo de lançamento">
           <button
             type="button"
             data-type="CREDIT"
             [class.is-active]="form.controls.type.value === 'CREDIT'"
+            [attr.aria-pressed]="form.controls.type.value === 'CREDIT'"
             (click)="selectType('CREDIT')"
           >
-            Crédito
+            <app-icon name="arrow-up" />Crédito
           </button>
           <button
             type="button"
             data-type="DEBIT"
             [class.is-active]="form.controls.type.value === 'DEBIT'"
+            [attr.aria-pressed]="form.controls.type.value === 'DEBIT'"
             (click)="selectType('DEBIT')"
           >
-            Débito
+            <app-icon name="arrow-down" />Débito
           </button>
         </div>
       </div>
 
       <div class="field">
-        <label class="field__label" for="amount">Valor (R$)</label>
+        <label class="field__label" for="amount">Valor (R$) <span class="required">*</span></label>
         <input id="amount" type="number" step="0.01" min="0.01" formControlName="amount" />
         @if (form.controls.amount.touched && form.controls.amount.invalid) {
           <span class="field__error">Informe um valor maior que zero.</span>
@@ -104,17 +113,39 @@
       </div>
 
       <div class="field">
-        <label class="field__label" for="occurredAt">Data e hora</label>
+        <label class="field__label" for="occurredAt"
+          >Data e Hora do Evento <span class="required">*</span></label
+        >
         <input id="occurredAt" type="datetime-local" formControlName="occurredAt" />
         @if (form.controls.occurredAt.touched && form.controls.occurredAt.invalid) {
           <span class="field__error">Informe a data e a hora do evento.</span>
         }
       </div>
 
-      <div>
+      <div class="field">
+        <label class="field__label" for="eventId">Event ID</label>
+        <input
+          id="eventId"
+          class="event-id"
+          [value]="eventId()"
+          readonly
+          aria-describedby="event-help"
+        />
+        <span class="field__hint" id="event-help"
+          ><app-icon name="info" />Identificador único do evento, gerado automaticamente. O mesmo
+          evento não é processado mais de uma vez.</span
+        >
+      </div>
+      <p class="form-note">
+        <app-icon name="info" /><span
+          >O saldo será validado ao enviar. Transações sem saldo suficiente serão rejeitadas.</span
+        >
+      </p>
+      <div class="form-actions">
+        <a class="button-outline" routerLink="/accounts">Cancelar</a>
         <button matButton="filled" type="submit" [disabled]="submitting()">
-          <app-icon name="add" class="icon-gap" />
-          {{ submitting() ? 'Enviando…' : 'Lançar transação' }}
+          <app-icon name="send" class="icon-gap" />
+          {{ submitting() ? 'Enviando…' : 'Enviar Transação' }}
         </button>
       </div>
     </form>

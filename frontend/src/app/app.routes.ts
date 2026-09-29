@@ -7,12 +7,14 @@ export const routes: Routes = [
     path: 'accounts',
     title: 'Contas · FRAGA Financeiro',
     canActivate: [autoLoginPartialRoutesGuard],
-    loadComponent: () => import('./features/accounts/accounts-page').then((module) => module.AccountsPage),
+    loadComponent: () =>
+      import('./features/accounts/financial-workspace').then((module) => module.FinancialWorkspace),
   },
   {
     path: 'accounts/:accountId/statement',
     title: 'Extrato · FRAGA Financeiro',
     canActivate: [autoLoginPartialRoutesGuard],
+    data: { standalone: true },
     loadComponent: () => import('./features/statement/statement-page').then((module) => module.StatementPage),
   },
   {
@@ -20,7 +22,7 @@ export const routes: Routes = [
     title: 'Lançar transação · FRAGA Financeiro',
     canActivate: [autoLoginPartialRoutesGuard],
     loadComponent: () =>
-      import('./features/transactions/new-transaction-page').then((module) => module.NewTransactionPage),
+      import('./features/accounts/financial-workspace').then((module) => module.FinancialWorkspace),
   },
   { path: '**', redirectTo: 'accounts' },
 ];

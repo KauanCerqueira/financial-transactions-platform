@@ -49,6 +49,25 @@ describe('AccountsPage', () => {
   it('shows skeletons while loading', () => {
     const fixture = setup('loading');
 
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('.skeleton').length).toBeGreaterThan(0);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.skeleton').length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('FiltrarContas_BuscaPorTitularOuId_PreservaSaldoConsolidado', () => {
+    const fixture = setup('loaded');
+    fixture.componentRef.setInput('searchText', 'ANA');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredAccounts()).toEqual(accounts);
+
+    fixture.componentRef.setInput('searchText', 'a1');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredAccounts()).toEqual(accounts);
+
+    fixture.componentRef.setInput('searchText', 'inexistente');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredAccounts()).toEqual([]);
+    expect(fixture.componentInstance.totalBalance()).toBe(1774.2);
+    expect(fixture.nativeElement.textContent).toContain('Nenhuma conta encontrada');
   });
 });

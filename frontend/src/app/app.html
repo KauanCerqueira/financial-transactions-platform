@@ -1,27 +1,46 @@
 <div class="shell">
-  <header class="shell__bar">
-    <a class="brand" routerLink="/accounts">
-      <span class="brand__mark">FRAGA</span>
-      <span class="brand__dot">·</span>
-      <span class="brand__product">Financeiro</span>
+  <aside class="shell__sidebar">
+    <a class="brand" routerLink="/accounts" aria-label="FRAGA Financeiro — Contas">
+      <span class="brand__symbol" aria-hidden="true"></span>
+      <span
+        ><span class="brand__mark">FRAGA</span
+        ><span class="brand__caption">INTELIGÊNCIA AUTOMOTIVA</span></span
+      >
     </a>
-
-    <span class="shell__spacer"></span>
-
-    <a matButton="filled" routerLink="/transactions/new">
-      <app-icon name="add" class="icon-gap" />Lançar transação
-    </a>
-    <button matButton (click)="logout()">Sair</button>
-  </header>
-
-  <div class="shell__body">
     <nav class="shell__nav" aria-label="Navegação principal">
-      <a routerLink="/accounts" routerLinkActive="is-active"><app-icon name="accounts" />Contas</a>
-      <a routerLink="/transactions/new" routerLinkActive="is-active"><app-icon name="add" />Lançar</a>
+      <a routerLink="/accounts" routerLinkActive="is-active"><app-icon name="bank" />Contas</a>
+      <a routerLink="/transactions/new" routerLinkActive="is-active"
+        ><app-icon name="add" />Nova Transação</a
+      >
     </nav>
-
-    <main class="shell__content">
-      <router-outlet />
-    </main>
+    <div class="sidebar-art" aria-hidden="true">
+      <p>Dados<br />que movem<br />o futuro.</p>
+    </div>
+  </aside>
+  <div class="shell__body">
+    <header class="shell__bar">
+      <form
+        class="search"
+        role="search"
+        (submit)="$event.preventDefault(); searchAccounts(search.value)"
+      >
+        <app-icon name="search" />
+        <input
+          #search
+          type="search"
+          aria-label="Buscar conta por titular ou ID"
+          placeholder="Buscar conta por titular ou ID..."
+          (input)="searchAccounts(search.value)"
+        />
+      </form>
+      <div class="session">
+        <span class="session__avatar"><app-icon name="user" /></span
+        ><span class="session__label">Área financeira<small>Acesso autenticado</small></span
+        ><button class="session__exit" (click)="logout()" aria-label="Sair da conta">
+          <app-icon name="logout" />
+        </button>
+      </div>
+    </header>
+    <main class="shell__content" id="main-content"><router-outlet /></main>
   </div>
 </div>

@@ -1,8 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { Store } from '@ngrx/store';
-import { CountUpDirective } from '../../shared/directives/count-up.directive';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
 import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from './state/accounts.actions';
@@ -16,7 +15,7 @@ import {
 
 @Component({
   selector: 'app-accounts-page',
-  imports: [RouterLink, MatButton, CurrencyBrlPipe, CountUpDirective, Icon],
+  imports: [RouterLink, MatButton, CurrencyBrlPipe, Icon],
   templateUrl: './accounts-page.html',
 })
 export class AccountsPage implements OnInit {
@@ -27,6 +26,15 @@ export class AccountsPage implements OnInit {
   readonly error = this.store.selectSignal(selectAccountsError);
   readonly loading = this.store.selectSignal(selectAccountsLoading);
   readonly totalBalance = this.store.selectSignal(selectTotalBalance);
+  readonly searchText = input('');
+  readonly selectedAccountId = input('');
+  readonly hasTransactionPanel = input(false);
+  readonly filteredAccounts = computed(() => {
+    const query = (this.searchText() ?? '').trim().toLocaleLowerCase('pt-BR');
+    return this.accounts().filter((account) =>
+      `${account.holderName} ${account.id}`.toLocaleLowerCase('pt-BR').includes(query),
+    );
+  });
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());

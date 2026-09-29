@@ -21,13 +21,15 @@ describe('NewTransactionPage', () => {
           initialState: {
             accounts: { accounts, status: 'loaded', error: null },
             transactionForm: {
-              command: submission ? {
-                eventId: 'previous-event',
-                accountId: 'a1',
-                type: 'CREDIT',
-                amount: 25,
-                occurredAt: '2026-01-30T10:00:00Z',
-              } : null,
+              command: submission
+                ? {
+                    eventId: 'previous-event',
+                    accountId: 'a1',
+                    type: 'CREDIT',
+                    amount: 25,
+                    occurredAt: '2026-01-30T10:00:00Z',
+                  }
+                : null,
               status: submission?.status ?? 'idle',
               result: null,
               error: submission ? { message: submission.message, code: submission.code } : null,
@@ -67,7 +69,13 @@ describe('NewTransactionPage', () => {
     const calls = dispatch.mock.calls as unknown as unknown[][];
     const action = calls[0][0] as {
       type: string;
-      command: { accountId: string; type: string; amount: number; eventId: string; occurredAt: string };
+      command: {
+        accountId: string;
+        type: string;
+        amount: number;
+        eventId: string;
+        occurredAt: string;
+      };
     };
 
     expect(action.type).toBe('[Transaction form] Submit');
@@ -92,7 +100,11 @@ describe('NewTransactionPage', () => {
   });
 
   it('retries a failed request using its original eventId', () => {
-    const { component, store } = setup({ status: 'error', message: 'Sem conexão', code: 'NETWORK_ERROR' });
+    const { component, store } = setup({
+      status: 'error',
+      message: 'Sem conexão',
+      code: 'NETWORK_ERROR',
+    });
     const dispatch = vi.spyOn(store, 'dispatch');
 
     component.retry();
@@ -103,13 +115,52 @@ describe('NewTransactionPage', () => {
   });
 
   it('recovers a pending command after reloading the page', () => {
-    sessionStorage.setItem('financial-transactions:pending-command', JSON.stringify({
-      eventId: 'saved-event', accountId: 'a1', type: 'CREDIT', amount: 25, occurredAt: '2026-01-30T10:00:00Z',
-    }));
+    sessionStorage.setItem(
+      'financial-transactions:pending-command',
+      JSON.stringify({
+        eventId: 'saved-event',
+        accountId: 'a1',
+        type: 'CREDIT',
+        amount: 25,
+        occurredAt: '2026-01-30T10:00:00Z',
+      }),
+    );
     const { dispatch } = setup();
 
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ command: expect.objectContaining({ eventId: 'saved-event' }) }),
     );
+  });
+
+  it('Submit_EventoExibido_EnviaMesmoIdentificador', () => {
+    const { component, dispatch } = setup();
+    component.form.patchValue({ accountId: 'a1', amount: 25 });
+    const displayedEventId = component.eventId();
+
+    component.submit();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ command: expect.objectContaining({ eventId: displayedEventId }) }),
+    );
+  });
+
+  it('SubmitAnother_FormularioUsado_RenovaEventoELimpaValidacao', () => {
+    const { component } = setup();
+    const previousEventId = component.eventId();
+    component.form.markAllAsTouched();
+    component.form.markAsDirty();
+
+    component.submitAnother();
+
+    expect(component.eventId()).not.toBe(previousEventId);
+    expect(component.form.untouched).toBe(true);
+    expect(component.form.pristine).toBe(true);
+  });
+
+  it('SelecionarConta_EntradaAlterada_PreencheContaDoPainel', () => {
+    const { fixture, component } = setup();
+    fixture.componentRef.setInput('initialAccountId', 'a1');
+    fixture.detectChanges();
+    expect(component.form.controls.accountId.value).toBe('a1');
   });
 });
