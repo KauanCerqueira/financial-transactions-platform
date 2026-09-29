@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { ProcessTransactionCommand, TransactionType } from '../../core/models/transaction';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
 import { Icon } from '../../shared/ui/icon/icon';
+import { forgetPendingTransaction, recoverPendingTransaction } from './pending-transaction';
 import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
 import * as TransactionsActions from './state/transactions.actions';
@@ -14,6 +15,7 @@ import {
   selectSubmissionError,
   selectSubmissionResult,
   selectSubmissionStatus,
+  selectSubmittedCommand,
   selectSubmitting,
 } from './state/transactions.selectors';
 
@@ -32,6 +34,7 @@ export class NewTransactionPage implements OnInit {
   readonly processing = this.store.selectSignal(selectProcessing);
   readonly result = this.store.selectSignal(selectSubmissionResult);
   readonly error = this.store.selectSignal(selectSubmissionError);
+  readonly submittedCommand = this.store.selectSignal(selectSubmittedCommand);
 
   readonly form = this.formBuilder.nonNullable.group({
     accountId: ['', Validators.required],
@@ -42,6 +45,12 @@ export class NewTransactionPage implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());
+
+    const pending = recoverPendingTransaction();
+
+    if (pending) {
+      this.store.dispatch(TransactionsActions.submitTransaction({ command: pending }));
+    }
   }
 
   selectType(type: TransactionType): void {
@@ -71,9 +80,18 @@ export class NewTransactionPage implements OnInit {
   }
 
   submitAnother(): void {
+    forgetPendingTransaction();
     this.store.dispatch(TransactionsActions.clearTransactionResult());
     this.store.dispatch(AccountsActions.loadAccounts());
     this.form.patchValue({ amount: 0, occurredAt: this.nowForInput() });
+  }
+
+  retry(): void {
+    const command = this.submittedCommand();
+
+    if (command) {
+      this.store.dispatch(TransactionsActions.submitTransaction({ command }));
+    }
   }
 
   private nowForInput(): string {

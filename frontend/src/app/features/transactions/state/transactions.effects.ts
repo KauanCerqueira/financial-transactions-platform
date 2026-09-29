@@ -6,16 +6,20 @@ import {
   Observable,
   catchError,
   concat,
+  concatWith,
+  defer,
   map,
   mergeMap,
   of,
   switchMap,
   take,
   takeWhile,
+  tap,
   timer,
 } from 'rxjs';
 import { TransactionsApi } from '../../../core/api/transactions-api';
 import { ApiError } from '../../../core/models/api-error';
+import { forgetPendingTransaction, rememberPendingTransaction } from '../pending-transaction';
 import * as TransactionsActions from './transactions.actions';
 
 const PollIntervalMs = 700;
@@ -30,10 +34,19 @@ export class TransactionsEffects {
     this.actions.pipe(
       ofType(TransactionsActions.submitTransaction),
       mergeMap(({ command }) =>
-        this.transactionsApi.enqueue(command).pipe(
+        defer(() => {
+          rememberPendingTransaction(command);
+          return this.transactionsApi.enqueue(command);
+        }).pipe(
           mergeMap((accepted) =>
             concat(
-              of(TransactionsActions.transactionAccepted({ result: accepted })),
+              of(TransactionsActions.transactionAccepted({ result: accepted })).pipe(
+                tap(() => {
+                  if (accepted.status !== 'PENDING') {
+                    forgetPendingTransaction();
+                  }
+                }),
+              ),
               accepted.status === 'PENDING' ? this.pollStatus(accepted.eventId) : EMPTY,
             ),
           ),
@@ -50,7 +63,14 @@ export class TransactionsEffects {
       take(MaxPolls),
       switchMap(() => this.transactionsApi.getStatus(eventId)),
       takeWhile((result) => result.status === 'PENDING', true),
-      map((result) => TransactionsActions.transactionResolved({ result })),
+      map((result) => {
+        if (result.status !== 'PENDING') {
+          forgetPendingTransaction();
+        }
+
+        return TransactionsActions.transactionResolved({ result });
+      }),
+      concatWith(of(TransactionsActions.transactionPollingTimedOut({ eventId }))),
     );
   }
 }

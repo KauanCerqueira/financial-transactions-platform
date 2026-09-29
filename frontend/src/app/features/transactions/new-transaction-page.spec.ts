@@ -10,6 +10,8 @@ const accounts: Account[] = [
 ];
 
 describe('NewTransactionPage', () => {
+  beforeEach(() => sessionStorage.clear());
+
   function setup(submission?: { status: SubmissionStatus; message: string; code: string }) {
     TestBed.configureTestingModule({
       imports: [NewTransactionPage],
@@ -19,6 +21,13 @@ describe('NewTransactionPage', () => {
           initialState: {
             accounts: { accounts, status: 'loaded', error: null },
             transactionForm: {
+              command: submission ? {
+                eventId: 'previous-event',
+                accountId: 'a1',
+                type: 'CREDIT',
+                amount: 25,
+                occurredAt: '2026-01-30T10:00:00Z',
+              } : null,
               status: submission?.status ?? 'idle',
               result: null,
               error: submission ? { message: submission.message, code: submission.code } : null,
@@ -28,10 +37,12 @@ describe('NewTransactionPage', () => {
       ],
     });
 
+    const store = TestBed.inject(MockStore);
+    const dispatch = vi.spyOn(store, 'dispatch');
     const fixture = TestBed.createComponent(NewTransactionPage);
     fixture.detectChanges();
 
-    return { fixture, component: fixture.componentInstance, store: TestBed.inject(MockStore) };
+    return { fixture, component: fixture.componentInstance, store, dispatch };
   }
 
   it('does not dispatch when the form is invalid', () => {
@@ -78,5 +89,27 @@ describe('NewTransactionPage', () => {
     expect(element.querySelector('.state--error')).toBeTruthy();
     expect(element.textContent).toContain('INSUFFICIENT_FUNDS');
     expect(element.textContent).toContain('Saldo insuficiente para esta movimentação.');
+  });
+
+  it('retries a failed request using its original eventId', () => {
+    const { component, store } = setup({ status: 'error', message: 'Sem conexão', code: 'NETWORK_ERROR' });
+    const dispatch = vi.spyOn(store, 'dispatch');
+
+    component.retry();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ command: expect.objectContaining({ eventId: 'previous-event' }) }),
+    );
+  });
+
+  it('recovers a pending command after reloading the page', () => {
+    sessionStorage.setItem('financial-transactions:pending-command', JSON.stringify({
+      eventId: 'saved-event', accountId: 'a1', type: 'CREDIT', amount: 25, occurredAt: '2026-01-30T10:00:00Z',
+    }));
+    const { dispatch } = setup();
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ command: expect.objectContaining({ eventId: 'saved-event' }) }),
+    );
   });
 });

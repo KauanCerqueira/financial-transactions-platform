@@ -1,6 +1,7 @@
 import { createReducer, on } from '@ngrx/store';
 import { messageForCode } from '../../../core/models/api-messages';
 import { TransactionAccepted } from '../../../core/models/transaction-event';
+import { ProcessTransactionCommand } from '../../../core/models/transaction';
 import * as TransactionsActions from './transactions.actions';
 
 export const transactionsFeatureKey = 'transactionForm';
@@ -8,12 +9,14 @@ export const transactionsFeatureKey = 'transactionForm';
 export type SubmissionStatus = 'idle' | 'submitting' | 'processing' | 'success' | 'error';
 
 export interface TransactionFormState {
+  command: ProcessTransactionCommand | null;
   status: SubmissionStatus;
   result: TransactionAccepted | null;
   error: { message: string; code: string } | null;
 }
 
 const initialState: TransactionFormState = {
+  command: null,
   status: 'idle',
   result: null,
   error: null,
@@ -21,8 +24,9 @@ const initialState: TransactionFormState = {
 
 export const transactionsReducer = createReducer(
   initialState,
-  on(TransactionsActions.submitTransaction, (state) => ({
+  on(TransactionsActions.submitTransaction, (state, { command }) => ({
     ...state,
+    command,
     status: 'submitting' as SubmissionStatus,
     result: null,
     error: null,
@@ -45,6 +49,18 @@ export const transactionsReducer = createReducer(
     result: null,
     error: { message, code },
   })),
+  on(TransactionsActions.transactionPollingTimedOut, (state, { eventId }) =>
+    state.status === 'processing' && state.command?.eventId === eventId
+      ? {
+          ...state,
+          status: 'error' as SubmissionStatus,
+          error: {
+            code: 'PROCESSING_TIMEOUT',
+            message: 'O processamento está demorando. Consulte novamente este mesmo evento.',
+          },
+        }
+      : state,
+  ),
   on(TransactionsActions.clearTransactionResult, () => initialState),
 );
 

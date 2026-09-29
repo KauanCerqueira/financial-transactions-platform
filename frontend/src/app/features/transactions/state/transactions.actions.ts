@@ -18,4 +18,8 @@ export const submitTransactionFailure = createAction(
   '[Transaction form] Failure',
   props<{ message: string; code: string }>(),
 );
+export const transactionPollingTimedOut = createAction(
+  '[Transaction form] Polling timed out',
+  props<{ eventId: string }>(),
+);
 export const clearTransactionResult = createAction('[Transaction form] Clear');

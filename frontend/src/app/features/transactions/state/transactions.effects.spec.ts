@@ -24,6 +24,7 @@ describe('TransactionsEffects', () => {
   let api: { enqueue: ReturnType<typeof vi.fn>; getStatus: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
+    sessionStorage.clear();
     actions$ = new ReplaySubject(1);
     api = { enqueue: vi.fn(), getStatus: vi.fn() };
 
@@ -67,5 +68,22 @@ describe('TransactionsEffects', () => {
     expect(await emitted).toEqual(
       TransactionsActions.submitTransactionFailure({ message: 'Sem conexão', code: 'NETWORK_ERROR' }),
     );
+    expect(sessionStorage.getItem('financial-transactions:pending-command')).toContain('e1');
+  });
+
+  it('reports a timeout after polling a pending event forty times', async () => {
+    vi.useFakeTimers();
+    api.enqueue.mockReturnValue(of(pending));
+    api.getStatus.mockReturnValue(of(pending));
+    const emitted: unknown[] = [];
+    const subscription = effects.submit.subscribe((action) => emitted.push(action));
+
+    (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));
+    await vi.advanceTimersByTimeAsync(28_000);
+
+    expect(emitted).toContainEqual(TransactionsActions.transactionPollingTimedOut({ eventId: 'e1' }));
+    expect(api.getStatus).toHaveBeenCalledTimes(40);
+    subscription.unsubscribe();
+    vi.useRealTimers();
   });
 });

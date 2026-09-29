@@ -51,7 +51,10 @@
         <p class="state__title"><app-icon name="alert" />Não foi possível lançar ({{ failure.code }})</p>
         <p class="state__text">{{ failure.message }}</p>
         <div class="result__actions">
-          <button matButton="filled" (click)="submitAnother()">Tentar outro</button>
+          @if (result()?.status !== 'REJECTED' && submittedCommand()) {
+            <button matButton="filled" (click)="retry()">Consultar este evento novamente</button>
+          }
+          <button matButton (click)="submitAnother()">Novo lançamento</button>
         </div>
       </div>
     }

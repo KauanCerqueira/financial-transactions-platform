@@ -32,6 +32,7 @@ describe('transactionsReducer', () => {
     const state = transactionsReducer(undefined, TransactionsActions.submitTransaction({ command }));
 
     expect(state.status).toBe('submitting');
+    expect(state.command).toEqual(command);
     expect(state.result).toBeNull();
   });
 
@@ -67,5 +68,19 @@ describe('transactionsReducer', () => {
 
     expect(state.status).toBe('idle');
     expect(state.error).toBeNull();
+  });
+
+  it('shows a recoverable error when the same event takes too long', () => {
+    const submitted = transactionsReducer(undefined, TransactionsActions.submitTransaction({ command }));
+    const processing = transactionsReducer(submitted, TransactionsActions.transactionAccepted({ result: pending }));
+
+    const timedOut = transactionsReducer(
+      processing,
+      TransactionsActions.transactionPollingTimedOut({ eventId: command.eventId }),
+    );
+
+    expect(timedOut.status).toBe('error');
+    expect(timedOut.command).toEqual(command);
+    expect(timedOut.error?.code).toBe('PROCESSING_TIMEOUT');
   });
 });
