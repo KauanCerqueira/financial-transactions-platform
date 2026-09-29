@@ -91,6 +91,15 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
   # Opcional: suba com `docker compose --profile observability up`
   # e defina ELASTICSEARCH_URI=http://elasticsearch:9200 para indexar os logs.
   elasticsearch:
