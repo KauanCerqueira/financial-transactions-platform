@@ -5,6 +5,7 @@ using FinancialTransactions.Application.Features.Transactions;
 using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.ValueObjects;
+using FinancialTransactions.UnitTests.TestDoubles;
 using Moq;
 
 namespace FinancialTransactions.UnitTests.Application;
@@ -15,10 +16,11 @@ public sealed class GetStatementUseCaseTests
 
     private readonly Mock<IAccountRepository> _accounts = new();
     private readonly Mock<ITransactionRepository> _transactions = new();
+    private readonly FakeCacheService _cache = new();
     private readonly GetStatementUseCase _useCase;
 
     public GetStatementUseCaseTests() =>
-        _useCase = new GetStatementUseCase(_accounts.Object, _transactions.Object);
+        _useCase = new GetStatementUseCase(_accounts.Object, _transactions.Object, _cache);
 
     [Fact]
     public async Task GetStatementAsync_WhenAccountDoesNotExist_ThrowsAccountNotFoundException()
@@ -38,19 +40,9 @@ public sealed class GetStatementUseCaseTests
     public async Task GetStatementAsync_WhenAccountExists_ReturnsPagedResultWithItems()
     {
         var accountId = Guid.NewGuid();
-        var account = Account.Create(accountId, "Ana", Money.Zero, Now);
-        var transaction = account.RegisterTransaction(
-            Guid.NewGuid(), TransactionType.Credit, Money.Create(100m), Now, Now);
+        var transaction = BuildTransaction(accountId);
 
-        _accounts
-            .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
-        _transactions
-            .Setup(repository => repository.GetPageAsync(accountId, 0, 20, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<Transaction> { transaction });
-        _transactions
-            .Setup(repository => repository.CountByAccountIdAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        SetUpExistingAccountWithOneTransaction(accountId, transaction);
 
         var result = await _useCase.GetStatementAsync(new GetStatementQuery(accountId, 1, 20));
 
@@ -63,14 +55,28 @@ public sealed class GetStatementUseCaseTests
     }
 
     [Fact]
+    public async Task GetStatementAsync_OnSecondCall_UsesTheCache()
+    {
+        var accountId = Guid.NewGuid();
+
+        SetUpExistingAccountWithOneTransaction(accountId, BuildTransaction(accountId));
+
+        await _useCase.GetStatementAsync(new GetStatementQuery(accountId, 1, 20));
+        await _useCase.GetStatementAsync(new GetStatementQuery(accountId, 1, 20));
+
+        _transactions.Verify(
+            repository => repository.GetPageAsync(accountId, 0, 20, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public async Task GetStatementAsync_WithInvalidPaging_ClampsPageAndPageSize()
     {
         var accountId = Guid.NewGuid();
-        var account = Account.Create(accountId, "Ana", Money.Zero, Now);
 
         _accounts
             .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
+            .ReturnsAsync(Account.Create(accountId, "Ana", Money.Zero, Now));
         _transactions
             .Setup(repository => repository.GetPageAsync(accountId, 0, 100, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Transaction>());
@@ -85,5 +91,25 @@ public sealed class GetStatementUseCaseTests
         _transactions.Verify(
             repository => repository.GetPageAsync(accountId, 0, 100, It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    private void SetUpExistingAccountWithOneTransaction(Guid accountId, Transaction transaction)
+    {
+        _accounts
+            .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Account.Create(accountId, "Ana", Money.Zero, Now));
+        _transactions
+            .Setup(repository => repository.GetPageAsync(accountId, 0, 20, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Transaction> { transaction });
+        _transactions
+            .Setup(repository => repository.CountByAccountIdAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+    }
+
+    private static Transaction BuildTransaction(Guid accountId)
+    {
+        var account = Account.Create(accountId, "Ana", Money.Zero, Now);
+
+        return account.RegisterTransaction(Guid.NewGuid(), TransactionType.Credit, Money.Create(100m), Now, Now);
     }
 }

@@ -21,6 +21,7 @@ services:
       dockerfile: src/FinancialTransactions.Api/Dockerfile
     environment:
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=financial_transactions;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
       ASPNETCORE_ENVIRONMENT: Production
       Observability__ElasticsearchUri: "${ELASTICSEARCH_URI:-}"
     ports:
@@ -28,6 +29,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   # Opcional: suba com `docker compose --profile observability up`
   # e defina ELASTICSEARCH_URI=http://elasticsearch:9200 para indexar os logs.

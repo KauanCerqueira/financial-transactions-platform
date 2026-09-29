@@ -1,4 +1,5 @@
 using FluentAssertions;
+using FinancialTransactions.Application.Abstractions.Caching;
 using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Exceptions;
 using FinancialTransactions.Application.Features.Transactions;
@@ -6,6 +7,7 @@ using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.Enums;
 using FinancialTransactions.Domain.Exceptions;
 using FinancialTransactions.Domain.ValueObjects;
+using FinancialTransactions.UnitTests.TestDoubles;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
@@ -19,6 +21,7 @@ public sealed class ProcessTransactionUseCaseTests
     private readonly Mock<IAccountRepository> _accounts = new();
     private readonly Mock<ITransactionRepository> _transactions = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly FakeCacheService _cache = new();
     private readonly FakeTimeProvider _timeProvider = new();
     private readonly ProcessTransactionUseCase _useCase;
 
@@ -37,6 +40,7 @@ public sealed class ProcessTransactionUseCaseTests
             _accounts.Object,
             _transactions.Object,
             _unitOfWork.Object,
+            _cache,
             _timeProvider);
     }
 
@@ -67,12 +71,7 @@ public sealed class ProcessTransactionUseCaseTests
         var command = Command(accountId, TransactionType.Credit, 50m);
         var account = Account.Create(accountId, "Ana", Money.Create(100m), Now);
 
-        _transactions
-            .Setup(repository => repository.GetByEventIdAsync(command.EventId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Transaction?)null);
-        _accounts
-            .Setup(repository => repository.GetByIdWithLockAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(account);
+        SetUpNewEvent(accountId, command, account);
 
         var result = await _useCase.ProcessAsync(command);
 
@@ -82,6 +81,22 @@ public sealed class ProcessTransactionUseCaseTests
             repository => repository.AddAsync(It.IsAny<Transaction>(), It.IsAny<CancellationToken>()),
             Times.Once);
         _unitOfWork.Verify(unit => unit.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenNewEvent_InvalidatesTheCache()
+    {
+        var accountId = Guid.NewGuid();
+        var command = Command(accountId, TransactionType.Credit, 50m);
+        var account = Account.Create(accountId, "Ana", Money.Create(100m), Now);
+
+        await _cache.SetAsync(CacheKeys.AccountsList, new List<string>(), TimeSpan.FromMinutes(1));
+        SetUpNewEvent(accountId, command, account);
+
+        await _useCase.ProcessAsync(command);
+
+        _cache.Contains(CacheKeys.AccountsList).Should().BeFalse();
+        _cache.Contains(CacheKeys.StatementVersion(accountId)).Should().BeTrue();
     }
 
     [Fact]
@@ -146,12 +161,23 @@ public sealed class ProcessTransactionUseCaseTests
         result.Transaction.Id.Should().Be(concurrent.Id);
     }
 
+    private void SetUpNewEvent(Guid accountId, ProcessTransactionCommand command, Account account)
+    {
+        _transactions
+            .Setup(repository => repository.GetByEventIdAsync(command.EventId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Transaction?)null);
+        _accounts
+            .Setup(repository => repository.GetByIdWithLockAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(account);
+    }
+
     private static ProcessTransactionCommand Command(Guid accountId, TransactionType type, decimal amount) =>
         new(Guid.NewGuid(), accountId, type, amount, OccurredAt);
 
     private static Transaction BuildTransaction(Guid accountId, Guid eventId)
     {
         var account = Account.Create(accountId, "Ana", Money.Zero, Now);
+
         return account.RegisterTransaction(eventId, TransactionType.Credit, Money.Create(100m), Now, Now);
     }
 }

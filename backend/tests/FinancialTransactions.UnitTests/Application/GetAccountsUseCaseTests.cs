@@ -3,6 +3,7 @@ using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Features.Accounts;
 using FinancialTransactions.Domain.Entities;
 using FinancialTransactions.Domain.ValueObjects;
+using FinancialTransactions.UnitTests.TestDoubles;
 using Moq;
 
 namespace FinancialTransactions.UnitTests.Application;
@@ -23,12 +24,28 @@ public sealed class GetAccountsUseCaseTests
                 Account.Create(Guid.NewGuid(), "Bruno", Money.Create(250.50m), Now)
             });
 
-        var useCase = new GetAccountsUseCase(accounts.Object);
+        var useCase = new GetAccountsUseCase(accounts.Object, new FakeCacheService());
 
         var result = await useCase.GetAllAsync();
 
         result.Should().HaveCount(2);
         result.Select(account => account.HolderName).Should().BeEquivalentTo("Ana", "Bruno");
         result.Sum(account => account.Balance).Should().Be(350.50m);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_OnSecondCall_UsesTheCache()
+    {
+        var accounts = new Mock<IAccountRepository>();
+        accounts
+            .Setup(repository => repository.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Account> { Account.Create(Guid.NewGuid(), "Ana", Money.Create(100m), Now) });
+
+        var useCase = new GetAccountsUseCase(accounts.Object, new FakeCacheService());
+
+        await useCase.GetAllAsync();
+        await useCase.GetAllAsync();
+
+        accounts.Verify(repository => repository.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

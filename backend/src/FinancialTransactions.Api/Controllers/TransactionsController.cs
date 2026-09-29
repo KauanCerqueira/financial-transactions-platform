@@ -2,6 +2,7 @@ using FinancialTransactions.Api.Contracts;
 using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Application.Features.Transactions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -9,6 +10,7 @@ namespace FinancialTransactions.Api.Controllers;
 
 [ApiController]
 [Route("api/transactions")]
+[EnableRateLimiting("transactions")]
 public sealed class TransactionsController(IProcessTransactionUseCase processTransaction) : ControllerBase
 {
     [HttpPost]

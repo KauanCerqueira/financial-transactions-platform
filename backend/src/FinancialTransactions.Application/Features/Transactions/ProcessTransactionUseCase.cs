@@ -1,3 +1,4 @@
+using FinancialTransactions.Application.Abstractions.Caching;
 using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Application.Exceptions;
@@ -10,8 +11,11 @@ public sealed class ProcessTransactionUseCase(
     IAccountRepository accounts,
     ITransactionRepository transactions,
     IUnitOfWork unitOfWork,
+    ICacheService cache,
     TimeProvider timeProvider) : IProcessTransactionUseCase
 {
+    private static readonly TimeSpan VersionDuration = TimeSpan.FromHours(1);
+
     public async Task<ProcessTransactionResult> ProcessAsync(
         ProcessTransactionCommand command,
         CancellationToken cancellationToken = default)
@@ -48,7 +52,7 @@ public sealed class ProcessTransactionUseCase(
         Money amount,
         CancellationToken cancellationToken)
     {
-        return await unitOfWork.ExecuteInTransactionAsync(async token =>
+        var result = await unitOfWork.ExecuteInTransactionAsync(async token =>
         {
             var account = await accounts.GetByIdWithLockAsync(command.AccountId, token)
                 ?? throw new AccountNotFoundException(command.AccountId);
@@ -66,6 +70,22 @@ public sealed class ProcessTransactionUseCase(
 
             return new ProcessTransactionResult(TransactionDto.From(transaction), AlreadyProcessed: false);
         }, cancellationToken);
+
+        await InvalidateCacheAsync(command.AccountId, cancellationToken);
+
+        return result;
+    }
+
+    private async Task InvalidateCacheAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        await cache.RemoveAsync(CacheKeys.AccountsList, cancellationToken);
+
+        // Troca a versão do extrato da conta: as páginas antigas caem por TTL.
+        await cache.SetAsync(
+            CacheKeys.StatementVersion(accountId),
+            Guid.NewGuid().ToString(),
+            VersionDuration,
+            cancellationToken);
     }
 
     private static ProcessTransactionResult CreateAlreadyProcessedResult(Transaction transaction) =>

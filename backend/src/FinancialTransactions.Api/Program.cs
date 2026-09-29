@@ -8,6 +8,8 @@ using FinancialTransactions.Application;
 using FinancialTransactions.Infrastructure;
 using FinancialTransactions.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.OpenApi;
 using Serilog;
 using Serilog.Sinks.Elasticsearch;
@@ -38,7 +40,7 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
     }
 });
 
-builder.Services.AddInfrastructure(connectionString);
+builder.Services.AddInfrastructure(connectionString, builder.Configuration.GetConnectionString("Redis"));
 builder.Services.AddApplication();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -72,10 +74,34 @@ builder.Services
     .AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("postgres", tags: ["ready"]);
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("transactions", limiter =>
+    {
+        limiter.PermitLimit = 30;
+        limiter.Window = TimeSpan.FromSeconds(10);
+        limiter.QueueLimit = 0;
+    });
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var problemDetails = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Muitas requisições.",
+            Detail = "Aguarde alguns segundos e tente novamente.",
+            Instance = context.HttpContext.Request.Path
+        };
+
+        await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+    };
+});
+
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+app.UseRateLimiter();
 
 app.UseSwagger();
 app.UseSwaggerUI();
