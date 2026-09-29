@@ -43,7 +43,7 @@ public sealed class Account
         };
     }
 
-    public Transaction Apply(
+    public Transaction RegisterTransaction(
         Guid eventId,
         TransactionType type,
         Money amount,

@@ -4,7 +4,7 @@ namespace FinancialTransactions.Application.Features.Transactions;
 
 public interface IGetStatementUseCase
 {
-    Task<PagedResult<TransactionDto>> ExecuteAsync(
+    Task<PagedResult<TransactionDto>> GetStatementAsync(
         GetStatementQuery query,
         CancellationToken cancellationToken = default);
 }

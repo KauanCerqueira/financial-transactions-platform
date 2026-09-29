@@ -31,7 +31,7 @@ public sealed class TransactionsController(IProcessTransactionUseCase processTra
             request.Amount,
             request.OccurredAt);
 
-        var result = await processTransaction.ExecuteAsync(command, cancellationToken);
+        var result = await processTransaction.ProcessAsync(command, cancellationToken);
 
         return result.AlreadyProcessed
             ? Ok(result.Transaction)

@@ -7,7 +7,7 @@ public sealed class GetStatementUseCase(ITransactionRepository transactions) : I
 {
     private const int MaxPageSize = 100;
 
-    public async Task<PagedResult<TransactionDto>> ExecuteAsync(
+    public async Task<PagedResult<TransactionDto>> GetStatementAsync(
         GetStatementQuery query,
         CancellationToken cancellationToken = default)
     {

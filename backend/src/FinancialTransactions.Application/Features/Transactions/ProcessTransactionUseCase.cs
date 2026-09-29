@@ -12,7 +12,7 @@ public sealed class ProcessTransactionUseCase(
     IUnitOfWork unitOfWork,
     TimeProvider timeProvider) : IProcessTransactionUseCase
 {
-    public async Task<ProcessTransactionResult> ExecuteAsync(
+    public async Task<ProcessTransactionResult> ProcessAsync(
         ProcessTransactionCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -20,7 +20,7 @@ public sealed class ProcessTransactionUseCase(
 
         if (processedTransaction is not null)
         {
-            return Replay(processedTransaction);
+            return CreateAlreadyProcessedResult(processedTransaction);
         }
 
         var amount = Money.Create(command.Amount);
@@ -38,7 +38,7 @@ public sealed class ProcessTransactionUseCase(
                 throw;
             }
 
-            return Replay(concurrentTransaction);
+            return CreateAlreadyProcessedResult(concurrentTransaction);
         }
     }
 
@@ -52,7 +52,7 @@ public sealed class ProcessTransactionUseCase(
             var account = await accounts.GetByIdWithLockAsync(command.AccountId, token)
                 ?? throw new AccountNotFoundException(command.AccountId);
 
-            var transaction = account.Apply(
+            var transaction = account.RegisterTransaction(
                 command.EventId,
                 command.Type,
                 amount,
@@ -67,6 +67,6 @@ public sealed class ProcessTransactionUseCase(
         }, cancellationToken);
     }
 
-    private static ProcessTransactionResult Replay(Transaction transaction) =>
+    private static ProcessTransactionResult CreateAlreadyProcessedResult(Transaction transaction) =>
         new(TransactionDto.From(transaction), AlreadyProcessed: true);
 }

@@ -5,7 +5,7 @@ namespace FinancialTransactions.Application.Features.Accounts;
 
 public sealed class GetAccountsUseCase(IAccountRepository accounts) : IGetAccountsUseCase
 {
-    public async Task<IReadOnlyList<AccountDto>> ExecuteAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<AccountDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var allAccounts = await accounts.GetAllAsync(cancellationToken);
 

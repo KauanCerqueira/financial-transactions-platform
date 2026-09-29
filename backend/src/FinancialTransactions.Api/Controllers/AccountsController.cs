@@ -14,14 +14,14 @@ public sealed class AccountsController(
     [HttpGet]
     [ProducesResponseType<IReadOnlyList<AccountDto>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<AccountDto>>> GetAll(CancellationToken cancellationToken) =>
-        Ok(await getAccounts.ExecuteAsync(cancellationToken));
+        Ok(await getAccounts.GetAllAsync(cancellationToken));
 
     [HttpGet("{accountId:guid}/transactions")]
     [ProducesResponseType<PagedResult<TransactionDto>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<PagedResult<TransactionDto>>> GetStatement(
+    public async Task<ActionResult<PagedResult<TransactionDto>>> GetTransactions(
         Guid accountId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken cancellationToken = default) =>
-        Ok(await getStatement.ExecuteAsync(new GetStatementQuery(accountId, page, pageSize), cancellationToken));
+        Ok(await getStatement.GetStatementAsync(new GetStatementQuery(accountId, page, pageSize), cancellationToken));
 }
