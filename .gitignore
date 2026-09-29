@@ -430,8 +430,10 @@ test-results/
 .AppleDouble
 .LSOverride
 
-# Icon must end with two \r
-Icon
+# Nota: o padrão "Icon" do template macOS foi removido de propósito.
+# No Windows (sem distinção de maiúsculas/minúsculas) ele ignorava por engano a
+# pasta de código frontend/src/app/shared/ui/icon/, o que deixava o componente de
+# ícones fora do repositório e quebrava o build do frontend em outra máquina.
 
 
 # Thumbnails
