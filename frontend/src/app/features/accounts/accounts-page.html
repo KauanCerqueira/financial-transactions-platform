@@ -1,8 +1,70 @@
 <section class="page">
   <header class="page__head">
-    <h1>Contas</h1>
-    <p class="page__subtitle">Saldo consolidado das contas dos clientes.</p>
+    <div>
+      <h1>Contas</h1>
+      <p class="page__subtitle">Saldo consolidado das contas dos clientes.</p>
+    </div>
+    <button matButton (click)="reload()" [disabled]="loading()">Atualizar</button>
   </header>
 
-  <p class="page__hint">A lista de contas entra na próxima fase.</p>
+  @switch (status()) {
+    @case ('loading') {
+      <div class="rows" aria-hidden="true">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="skeleton"></div>
+        }
+      </div>
+    }
+
+    @case ('error') {
+      <div class="state state--error" role="alert">
+        <p class="state__title">Não foi possível carregar as contas</p>
+        <p class="state__text">{{ error() }}</p>
+        <button matButton="filled" (click)="reload()">Tentar de novo</button>
+      </div>
+    }
+
+    @default {
+      @if (accounts().length === 0) {
+        <div class="state">
+          <p class="state__title">Nenhuma conta cadastrada</p>
+          <p class="state__text">Quando houver contas, elas aparecem aqui.</p>
+        </div>
+      } @else {
+        <div class="summary">
+          <div class="summary__item">
+            <span class="summary__label">Saldo total</span>
+            <span class="summary__value value">{{ totalBalance() | brl }}</span>
+          </div>
+          <div class="summary__item">
+            <span class="summary__label">Contas</span>
+            <span class="summary__value value">{{ accounts().length }}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Titular</th>
+                <th scope="col" class="table__number">Saldo</th>
+                <th scope="col" class="table__action"><span class="visually-hidden">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (account of accounts(); track account.id) {
+                <tr>
+                  <td>{{ account.holderName }}</td>
+                  <td class="table__number value">{{ account.balance | brl }}</td>
+                  <td class="table__action">
+                    <a matButton [routerLink]="['/accounts', account.id, 'statement']">Ver extrato</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  }
 </section>
