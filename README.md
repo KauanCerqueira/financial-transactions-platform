@@ -1,55 +1,169 @@
-# Plataforma de transações financeiras
+# FRAGA · Financeiro
 
-Teste técnico fullstack: uma API em .NET 10 recebe créditos e débitos, um worker processa os eventos, e uma aplicação Angular 22 permite consultar contas, extratos e o resultado de cada lançamento. Os dados são fictícios e a aplicação não movimenta dinheiro real.
+Plataforma de transações financeiras: uma **API em .NET** recebe créditos e débitos, um **worker**
+processa os eventos em segundo plano e uma **aplicação Angular** permite consultar contas, extratos
+e o resultado de cada lançamento.
 
-## Serviços e portas
+O foco não é só "funcionar": as **quatro regras de negócio** do desafio — idempotência, consistência,
+transacionalidade e integridade ponta a ponta — são garantidas em profundidade (domínio, aplicação e
+banco) e cada uma tem teste.
 
-| Serviço | URL / porta | Observação |
-|---|---|---|
-| Aplicação web | http://localhost:4200 | nginx serve o Angular e encaminha `/api` à API |
-| API + Swagger | http://localhost:8080/swagger | documentação interativa com exemplos |
-| Keycloak | http://localhost:8081 | administração: `admin` / `admin` |
-| RabbitMQ | http://localhost:15672 | administração: `guest` / `guest` |
-| PostgreSQL | localhost:5433 | `postgres` / `postgres` |
-| Redis | localhost:6379 | cache e limite de requisições |
+> **Demonstração não oficial.** O visual é inspirado na identidade da Fraga Inteligência Automotiva,
+> usada aqui apenas como referência estética para um projeto de avaliação técnica. Não há vínculo
+> institucional, os dados são fictícios e nenhuma operação financeira real acontece.
 
-## Executar a aplicação
+---
 
-Requisitos: Docker Desktop com Docker Compose e as portas `4200`, `8080`, `8081`, `5433`, `5672`, `6379` e `15672` livres.
+## Telas
+
+| Contas (lista, resumo e extrato) | Extrato da conta (tela própria, com filtros) |
+|---|---|
+| ![Contas](docs/prints/01-contas.png) | ![Extrato](docs/prints/02-extrato.png) |
+
+| Informações da conta | Nova transação (painel lateral) |
+|---|---|
+| ![Informações](docs/prints/03-informacoes.png) | ![Nova transação](docs/prints/04-nova-transacao.png) |
+
+| Feedback de sucesso | Feedback de saldo insuficiente |
+|---|---|
+| ![Sucesso](docs/prints/05-lancamento-sucesso.png) | ![Saldo insuficiente](docs/prints/06-saldo-insuficiente.png) |
+
+> Os prints são gerados pelo próprio projeto, com `npm run prints` (Playwright), a partir da aplicação
+> em execução — assim nunca ficam desatualizados.
+
+---
+
+## Como rodar
+
+Pré-requisito: **Docker** com Compose. Nada mais.
 
 ```bash
 docker compose up --build
 ```
 
-Abra [http://localhost:4200](http://localhost:4200). O login de demonstração é `operador` / `operador123`. A API publica o Swagger em [http://localhost:8080/swagger](http://localhost:8080/swagger). As contas iniciais são Ana Souza, Bruno Lima e Carla Mendes; os saldos de abertura também aparecem no extrato como créditos.
+Abra **http://localhost:4200** e entre com **`operador` / `operador123`**.
 
-Para encerrar, use `docker compose down`. Para apagar os dados de demonstração e recomeçar, use `docker compose down -v`.
+| Serviço | Endereço | Observação |
+|---|---|---|
+| Aplicação web | http://localhost:4200 | o nginx serve o Angular e encaminha `/api` à API |
+| API + Swagger | http://localhost:8080/swagger | documentação interativa, com exemplos prontos |
+| Keycloak | http://localhost:8081 | admin / admin |
+| RabbitMQ | http://localhost:15672 | guest / guest |
+| PostgreSQL | localhost:5433 | postgres / postgres |
 
-> Ambiente opcional de observabilidade (log indexado no Elasticsearch):
+Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `docker compose down -v`.
+
+> Observabilidade opcional (logs indexados no Elasticsearch):
 > `ELASTICSEARCH_URI=http://elasticsearch:9200 docker compose --profile observability up`
+
+---
+
+## O que o sistema faz
+
+- **Lista de contas** com saldo consolidado e um resumo (total em contas, contas cadastradas e total de
+  lançamentos).
+- **Extrato da conta** em tela própria, paginado, com **filtros por tipo e período** e uma coluna que
+  mostra o **saldo após cada lançamento**.
+- **Lançamento de crédito ou débito** com validação de campos e feedback claro de **processamento,
+  sucesso, duplicidade e saldo insuficiente** (painel na tela e aviso no canto).
+- **Estados de interface**: carregamento (esqueleto), erro com "tentar de novo", lista vazia e sessão
+  expirada (que leva de volta ao login).
+- **Segurança**: acesso autenticado via Keycloak (OIDC, Authorization Code + PKCE).
+
+## As quatro regras de negócio
+
+| Regra | Como é garantida |
+|---|---|
+| **Idempotência** | Índice único em `transactions.event_id`. Repetir o mesmo evento devolve o resultado anterior e o saldo **não** muda — inclusive quando a fila reentrega a mensagem |
+| **Consistência** | Invariante no agregado `Account` (saldo nunca negativo) e `CHECK balance >= 0` no banco |
+| **Transacionalidade** | Saldo e lançamento gravados na **mesma transação**; ou tudo grava, ou nada |
+| **Integridade ponta a ponta** | O backend é a fonte da verdade; o frontend reflete o estado e traduz os erros de negócio |
+
+Concorrência: ao debitar, a conta é bloqueada com `SELECT ... FOR UPDATE`, impedindo que duas
+operações gastem o mesmo saldo. Há teste de integração com débitos simultâneos.
+
+---
 
 ## Arquitetura
 
+Clean Architecture com DDD tático. As dependências apontam para dentro:
+`Api → Infrastructure → Application → Domain`.
+
 | Camada | Responsabilidade |
 |---|---|
-| `backend/src/FinancialTransactions.Domain` | `Account`, `Transaction`, `Money` e regras de saldo |
-| `backend/src/FinancialTransactions.Application` | Casos de uso e interfaces de persistência, cache e fila |
-| `backend/src/FinancialTransactions.Infrastructure` | EF Core, PostgreSQL, Redis e RabbitMQ |
-| `backend/src/FinancialTransactions.Api` | Contratos HTTP, autenticação, Swagger e tratamento de erros |
-| `backend/src/FinancialTransactions.Worker` | Consumo e recuperação de eventos pendentes |
-| `frontend` | Angular, NgRx, serviços HTTP e páginas de contas, extrato e lançamento |
+| `FinancialTransactions.Domain` | `Account`, `Transaction`, `Money` e as regras de saldo |
+| `FinancialTransactions.Application` | Casos de uso e interfaces de persistência, cache e fila |
+| `FinancialTransactions.Infrastructure` | EF Core, PostgreSQL, Redis, RabbitMQ e cache |
+| `FinancialTransactions.Api` | Contratos HTTP, autenticação, Swagger, health checks e DI |
+| `FinancialTransactions.Worker` | Consome a fila e atualiza os saldos |
+| `frontend` | Angular + NgRx: contas, extrato e lançamentos |
 
-As dependências apontam para o domínio. O frontend usa a API como fonte da verdade: o saldo é calculado e persistido no backend. O Nginx da aplicação web encaminha `/api` à API, preservando a mesma origem no navegador. O Keycloak fornece autenticação OIDC para a demonstração.
+**Fluxo de um lançamento (assíncrono):**
 
-O fluxo de um lançamento é:
+```
+POST /api/transactions
+   └─ grava o evento como PENDING no PostgreSQL e publica na fila (RabbitMQ)  ──►  202 Accepted
+                                                                                     │
+                            o worker bloqueia a conta, aplica o crédito/débito e grava
+                            saldo + histórico na mesma transação                    │
+                                                                                     ▼
+GET /api/transactions/{eventId}  ◄── PROCESSED (com o lançamento) ou REJECTED (com o motivo)
+```
 
-1. A API valida o payload, grava o evento como `PENDING` no PostgreSQL e publica uma mensagem no RabbitMQ. A resposta HTTP é `202 Accepted`; o cliente consulta `GET /api/transactions/{eventId}` até o processamento terminar.
-2. O worker bloqueia a conta no PostgreSQL, aplica crédito ou débito no domínio e grava saldo e histórico na mesma transação. O índice único de `eventId` impede lançamento duplicado.
-3. O resultado vira `PROCESSED` ou `REJECTED`, com motivo de negócio. O frontend mostra o estado recebido da API e consulta novamente as contas e o extrato quando necessário.
+---
 
-O `eventId` identifica uma tentativa de lançamento. Repetir esse identificador não cria uma segunda movimentação. O formulário conserva o evento na sessão do navegador até haver resultado definitivo; uma falha de rede ou recarga da página retoma o mesmo evento.
+## Stack e diferenciais
 
-### Estrutura do repositório
+| Requisito da vaga / desafio | Onde aparece |
+|---|---|
+| C#/.NET + APIs REST | ASP.NET Core, casos de uso, ProblemDetails e Swagger documentado |
+| Angular + TypeScript + RxJS | Componentes standalone, serviços tipados e roteamento |
+| **NgRx** | Contas, extrato e formulário como fatias de estado (actions, reducers, effects, selectors) |
+| EF Core + PostgreSQL | Mapeamentos, migrations, índices e `FOR UPDATE` |
+| Clean Architecture / DDD | Camadas com dependências para dentro e agregado protegendo invariantes |
+| Docker | Um `docker compose up` sobe frontend, API, worker, banco, cache, fila e identidade |
+| **Redis** | Cache com invalidação por versão e limite de requisições (30/10s) |
+| **RabbitMQ** | Processamento assíncrono do saldo por um worker separado |
+| **Keycloak (OIDC/OAuth2)** | Login com PKCE no frontend e validação de JWT na API |
+| **Observabilidade** | Logs estruturados (Serilog) e health checks de liveness e readiness |
+
+## Testes
+
+```bash
+dotnet test backend/FinancialTransactions.slnx   # 49 no backend
+cd frontend
+npm test -- --watch=false                        # 43 no frontend (Vitest)
+npm run e2e                                      # 6 ponta a ponta (Playwright)
+```
+
+**98 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
+cobrem os cenários críticos: saldo insuficiente, evento duplicado e débitos concorrentes. Os testes
+ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → lançamento com
+sucesso → rejeição por saldo insuficiente. Os testes e2e precisam da aplicação no ar
+(`docker compose up`).
+
+---
+
+## Decisões e trade-offs
+
+- **Processamento assíncrono:** o RabbitMQ desacopla o recebimento da atualização do saldo, o que dá
+  vazão e resiliência, mas exige expor o estado `PENDING` e consultar o resultado. O worker também
+  reprocessa eventos pendentes antigos, cobrindo falhas de publicação.
+- **Cache com invalidação por versão:** cada extrato é cacheado sob uma versão da conta; ao lançar, a
+  versão muda e as entradas antigas expiram sozinhas — sem varrer chaves nem servir dado velho.
+- **Autenticação por configuração:** com o Keycloak presente, todas as rotas exigem usuário
+  autenticado (os health checks ficam públicos); sem ele, o ambiente abre para desenvolvimento e
+  testes.
+- **Moeda como Value Object:** `Money` é imutável, nunca negativo e sempre com 2 casas (arredondamento
+  bancário), evitando erros de arredondamento.
+- **Testes de frontend em Vitest:** o Angular 22 usa Vitest como runner padrão (o Karma foi
+  depreciado). O enunciado cita Jasmine/Karma ou Jest; mantivemos o padrão do Angular.
+- **Referências curtas:** os identificadores aparecem como `#57F1B664`, legíveis para quem usa a tela;
+  o valor completo fica no `title` (hover), para suporte.
+- **Segredos:** as credenciais do Compose servem apenas para desenvolvimento local. Em produção seriam
+  necessários segredos externos, TLS e configuração de produção do Keycloak.
+
+## Estrutura do repositório
 
 ```
 backend/
@@ -63,88 +177,12 @@ backend/
    ├─ FinancialTransactions.UnitTests        domínio e casos de uso
    └─ FinancialTransactions.IntegrationTests API com PostgreSQL e RabbitMQ reais
 frontend/
-└─ src/app/
-   ├─ core/      modelos, serviços HTTP, interceptor de erro e sessão
-   ├─ shared/    componentes e pipes reutilizáveis
-   └─ features/  contas, extrato e transações, cada uma com seu estado NgRx
-infra/keycloak/  realm versionado (clients, role e usuário de demonstração)
+├─ e2e/         testes ponta a ponta (Playwright)
+├─ scripts/     geração dos prints do README
+└─ src/app/     core, shared e features (contas, extrato e transações)
+infra/keycloak/ realm versionado (clients, role e usuário de demonstração)
+docs/prints/    imagens usadas neste README
 ```
-
-## Regras de negócio garantidas
-
-| Regra | Onde é garantida |
-|---|---|
-| **Idempotência** | Índice único em `transactions.event_id`; repetir o `eventId` devolve o mesmo resultado, inclusive em reentrega da fila (*at-least-once*) |
-| **Consistência** | Invariante no agregado `Account` (saldo nunca negativo) e `CHECK balance >= 0` no banco |
-| **Transacionalidade** | Saldo e lançamento gravados na mesma transação, via `UnitOfWork` |
-| **Integridade ponta a ponta** | O backend é a fonte da verdade; o frontend apenas reflete e traduz os erros de negócio |
-
-## API
-
-| Método e rota | Resultado |
-|---|---|
-| `GET /api/accounts` | Contas e saldos atuais |
-| `GET /api/accounts/{accountId}/transactions?page=1&pageSize=10&type=&from=&to=` | Extrato paginado com `balanceAfter`, filtrável por tipo e período |
-| `POST /api/transactions` | Recebe um evento, retorna `PENDING` ou estado conhecido |
-| `GET /api/transactions/{eventId}` | Consulta `PENDING`, `PROCESSED` ou `REJECTED` |
-| `GET /health` e `GET /health/ready` | Estado da API e do PostgreSQL |
-
-Exemplo de evento:
-
-```json
-{
-  "eventId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "accountId": "11111111-1111-1111-1111-111111111111",
-  "type": "CREDIT",
-  "amount": 150.75,
-  "occurredAt": "2026-01-30T10:15:00Z"
-}
-```
-
-Erros de negócio são retornados como `ProblemDetails` com `code`, por exemplo `INSUFFICIENT_FUNDS` ou `DUPLICATE_EVENT`. No fluxo assíncrono, uma rejeição de saldo também pode aparecer no status do evento como `REJECTED` e `rejectionCode`.
-
-## Decisões e limites
-
-- **Processamento assíncrono:** RabbitMQ desacopla o recebimento da atualização do saldo, mas exige expor o estado `PENDING` e consultar o resultado. O worker procura eventos pendentes antigos a cada 15 segundos e os republica quando a gravação ocorreu, mas a publicação falhou. Mensagens repetidas são seguras graças à idempotência no banco.
-- **Concorrência:** o débito bloqueia a linha da conta com `FOR UPDATE`; dois processos não podem gastar simultaneamente o mesmo saldo. Os testes de integração exercitam duas instâncias do caso de uso com contextos de banco independentes.
-- **Cache:** Redis acelera lista de contas e extratos. O caso de uso invalida a lista e troca a versão do extrato após um lançamento; o banco continua sendo a fonte de verdade.
-- **Testes frontend:** o Angular usa o runner Vitest integrado ao build atual. O enunciado cita Jasmine/Karma ou Jest; escolhemos Vitest para manter o projeto alinhado ao Angular 22. Há testes de serviços com `HttpTestingController`, de componentes com `TestBed` e de estado/efeitos NgRx.
-- **Identidade visual:** “FRAGA · Financeiro” é uma demonstração não oficial inspirada na paleta da Fraga Inteligência Automotiva. Não há vínculo, dados reais de clientes nem uso do logotipo como ativo.
-- **Ambiente:** credenciais e URLs em `docker-compose.yml` são somente para desenvolvimento local. Antes de uso real seriam necessários segredos externos, TLS e configuração de produção do Keycloak.
-
-## Diferenciais da vaga atendidos
-
-| Requisito da vaga | Como aparece no projeto |
-|---|---|
-| Angular + TypeScript + RxJS | Componentes standalone, serviços tipados e NgRx (Store/Effects) no estado |
-| NgRx | Três fatias de estado (contas, extrato e formulário) com actions, reducers, effects e selectors |
-| C#/.NET + APIs REST | ASP.NET Core com casos de uso, ProblemDetails e Swagger documentado |
-| Entity Framework Core + PostgreSQL | Mapeamentos, migrations, índices e `FOR UPDATE` |
-| Clean Architecture / DDD | Camadas com dependências para dentro e agregado `Account` protegendo invariantes |
-| Docker | Compose sobe frontend, API, worker, banco, cache, fila e identidade |
-| Elasticsearch / RabbitMQ / Redis | Logs estruturados com opção de sink, processamento assíncrono e cache com limite de requisições |
-| Keycloak / OAuth2 / OIDC | Authorization Code + PKCE no frontend e validação de JWT na API |
-| Observabilidade | Serilog em JSON e health checks de liveness e readiness |
-
-## Testes e desenvolvimento local
-
-Com .NET 10 e Node.js instalados:
-
-```bash
-dotnet build backend/FinancialTransactions.slnx
-dotnet test backend/FinancialTransactions.slnx
-cd frontend
-npm ci
-npm test -- --watch=false
-npm run build
-npm run e2e
-```
-
-Hoje são **49 testes no backend** (unitários e de integração), **41 no frontend** (Vitest) e **6 ponta a ponta** (Playwright: login, contas, extrato com filtros, aba de informações, lançamento com sucesso e rejeição). Os testes de integração usam Testcontainers e precisam do Docker em execução. Os testes e2e precisam da aplicação no ar (`docker compose up`) e do Chromium do Playwright (`npx playwright install chromium`).
-
-O frontend pode ser iniciado fora do Compose com `npm start` na pasta `frontend`; a configuração de desenvolvimento encaminha `/api` para `localhost:8080`. A aplicação completa é iniciada com o Compose acima.
-
-Os testes cobrem regras do domínio, idempotência, saldo insuficiente, recuperação de evento pendente, concorrência no banco, contratos HTTP, validação do formulário e estados do frontend.
 
 ## Próximos passos
 
