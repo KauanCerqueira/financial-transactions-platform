@@ -79,7 +79,10 @@
             </thead>
             <tbody>
               @for (account of filteredAccounts(); track account.id) {
-                <tr [class.is-selected]="selectedAccountId() === account.id">
+                <tr
+                  [class.is-selected]="selectedAccountId() === account.id"
+                  (click)="accountSelected.emit(account.id)"
+                >
                   <td>
                     <strong>{{ account.holderName }}</strong
                     ><span class="table__secondary">Conta financeira</span>
@@ -87,16 +90,22 @@
                   <td class="identifier" [title]="account.id">{{ account.id | shortId }}</td>
                   <td class="table__number amount amount--credit">{{ account.balance | brl }}</td>
                   <td class="table__action">
-                    <a
-                      class="button-outline"
-                      [routerLink]="
-                        hasTransactionPanel()
-                          ? ['/transactions/new']
-                          : ['/accounts', account.id, 'statement']
-                      "
-                      [queryParams]="hasTransactionPanel() ? { accountId: account.id } : {}"
-                      >Ver extrato<app-icon name="chevron-right"
-                    /></a>
+                    @if (hasTransactionPanel()) {
+                      <a
+                        class="button-outline"
+                        routerLink="/transactions/new"
+                        [queryParams]="{ accountId: account.id }"
+                        >Ver extrato<app-icon name="chevron-right"
+                      /></a>
+                    } @else {
+                      <button
+                        type="button"
+                        class="button-outline"
+                        (click)="accountSelected.emit(account.id)"
+                      >
+                        Ver extrato<app-icon name="chevron-right" />
+                      </button>
+                    }
                   </td>
                 </tr>
               } @empty {

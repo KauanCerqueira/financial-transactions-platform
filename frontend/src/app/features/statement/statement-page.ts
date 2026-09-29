@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
-import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Store } from '@ngrx/store';
 import { StatementFilters } from '../../core/models/statement-filters';
@@ -33,9 +32,6 @@ type TypeFilter = TransactionType | 'ALL';
   imports: [
     RouterLink,
     MatButton,
-    MatMenu,
-    MatMenuItem,
-    MatMenuTrigger,
     MatPaginator,
     CurrencyBrlPipe,
     DateBrPipe,
@@ -47,7 +43,6 @@ type TypeFilter = TransactionType | 'ALL';
 })
 export class StatementPage implements OnInit {
   private readonly store = inject(Store);
-  private readonly router = inject(Router);
 
   readonly accountId = input.required<string>();
   readonly standalone = input(false);
@@ -89,10 +84,6 @@ export class StatementPage implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());
-  }
-
-  selectAccount(accountId: string): void {
-    void this.router.navigate(['/accounts', accountId, 'statement']);
   }
 
   onPage(event: PageEvent): void {

@@ -12,9 +12,15 @@ const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'pt-BR' });
 const page = await context.newPage();
 
-async function capture(name) {
+async function capture(name, target = null) {
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `${outputDir}${name}.png`, fullPage: true });
+
+  if (target) {
+    await target.screenshot({ path: `${outputDir}${name}.png` });
+  } else {
+    await page.screenshot({ path: `${outputDir}${name}.png`, fullPage: true });
+  }
+
   console.log(`capturado: ${name}.png`);
 }
 
@@ -32,12 +38,12 @@ await login();
 await page.locator('.accounts-table tbody tr').first().waitFor();
 await capture('01-contas');
 
-await page.getByRole('link', { name: /Ver extrato/ }).first().click();
+await page.locator('.accounts-table tbody tr').first().click();
 await page.locator('.statement-table tbody tr').first().waitFor();
-await capture('02-extrato');
+await capture('02-extrato', page.locator('.statement-card'));
 
 await page.getByRole('tab', { name: 'Informações' }).click();
-await capture('03-informacoes');
+await capture('03-informacoes', page.locator('.statement-card'));
 
 await page.locator('a[href="/transactions/new"]').click();
 await page.locator('.transaction-panel form').waitFor();

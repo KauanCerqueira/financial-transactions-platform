@@ -38,6 +38,7 @@ export const statementReducer = createReducer(
     page,
     pageSize,
     filters: filters ?? emptyStatementFilters,
+    summary: null,
     status: 'loading' as LoadStatus,
     error: null,
   })),

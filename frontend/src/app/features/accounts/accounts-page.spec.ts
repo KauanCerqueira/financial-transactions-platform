@@ -61,6 +61,16 @@ describe('AccountsPage', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('emits the selected account when a row is clicked', () => {
+    const fixture = setup('loaded');
+    const selected: string[] = [];
+    fixture.componentInstance.accountSelected.subscribe((accountId) => selected.push(accountId));
+
+    (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>('.accounts-table tbody tr')?.click();
+
+    expect(selected).toEqual(['a1']);
+  });
+
   it('FiltrarContas_BuscaPorTitularOuId_PreservaSaldoConsolidado', () => {
     const fixture = setup('loaded');
     fixture.componentRef.setInput('searchText', 'ANA');

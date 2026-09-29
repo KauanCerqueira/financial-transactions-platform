@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { Store } from '@ngrx/store';
@@ -30,6 +30,7 @@ export class AccountsPage implements OnInit {
   readonly searchText = input('');
   readonly selectedAccountId = input('');
   readonly hasTransactionPanel = input(false);
+  readonly accountSelected = output<string>();
   readonly filteredAccounts = computed(() => {
     const query = (this.searchText() ?? '').trim().toLocaleLowerCase('pt-BR');
     return this.accounts().filter((account) =>

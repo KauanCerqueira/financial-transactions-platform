@@ -16,7 +16,7 @@ banco) e cada uma tem teste.
 
 ## Telas
 
-| Contas (lista, resumo e extrato) | Extrato da conta (tela própria, com filtros) |
+| Contas (lista, resumo e extrato abaixo) | Extrato da conta (filtros, totais e saldo por lançamento) |
 |---|---|
 | ![Contas](docs/prints/01-contas.png) | ![Extrato](docs/prints/02-extrato.png) |
 
@@ -62,9 +62,9 @@ Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `d
 
 - **Lista de contas** com saldo consolidado e um resumo (total em contas, contas cadastradas e total de
   lançamentos).
-- **Extrato da conta** em tela própria, paginado, com **filtros por tipo e período**, o **total de
-  créditos e débitos do período** e uma coluna que mostra o **saldo após cada lançamento**. No próprio
-  cabeçalho dá para **trocar de conta** sem voltar para a lista.
+- **Extrato da conta** logo abaixo da lista: **clicar em qualquer lugar da linha** de uma conta troca o
+  extrato exibido. É paginado, com **filtros por tipo e período**, o **total de créditos e débitos do
+  período** e colunas com o **saldo após cada lançamento** e a **data de gravação**.
 - **Lançamento de crédito ou débito** com validação de campos e feedback claro de **processamento,
   sucesso, duplicidade e saldo insuficiente** (painel na tela e aviso no canto).
 - **Estados de interface**: carregamento (esqueleto), erro com "tentar de novo", lista vazia e sessão

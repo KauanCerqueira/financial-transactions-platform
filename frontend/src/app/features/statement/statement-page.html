@@ -9,33 +9,9 @@
     <header class="statement-head">
       <span class="summary__icon"><app-icon name="bank" /></span>
       <div class="statement-head__identity">
-        <button
-          type="button"
-          class="account-switch"
-          [matMenuTriggerFor]="accountMenu"
-          aria-label="Trocar de conta"
-        >
-          <span class="account-switch__name">{{ account()?.holderName ?? 'Selecione a conta' }}</span>
-          <app-icon name="chevron-down" />
-        </button>
+        <h2>{{ account()?.holderName ?? 'Extrato da conta' }}</h2>
         <span class="identifier" [title]="accountId()">{{ accountId() | shortId }}</span>
       </div>
-
-      <mat-menu #accountMenu="matMenu">
-        @for (candidate of accounts(); track candidate.id) {
-          <button
-            type="button"
-            mat-menu-item
-            [class.is-current]="candidate.id === accountId()"
-            (click)="selectAccount(candidate.id)"
-          >
-            <span class="account-option">
-              <span>{{ candidate.holderName }}</span>
-              <small class="identifier">{{ candidate.id | shortId }}</small>
-            </span>
-          </button>
-        }
-      </mat-menu>
 
       @if (account(); as current) {
         <div class="statement-head__balance">
@@ -120,27 +96,29 @@
           }
         </div>
 
-        <div class="statement-summary">
-          <div class="statement-summary__item">
-            <span class="statement-summary__label">Créditos</span>
-            <strong class="amount--credit">+{{ (summary()?.creditTotal ?? 0) | brl }}</strong>
-            <small>{{ summary()?.creditCount ?? 0 }} lançamentos</small>
+        @if (summary(); as totals) {
+          <div class="statement-summary">
+            <div class="statement-summary__item">
+              <span class="statement-summary__label">Créditos</span>
+              <strong class="amount--credit">+{{ totals.creditTotal | brl }}</strong>
+              <small>{{ totals.creditCount }} lançamentos</small>
+            </div>
+            <div class="statement-summary__item">
+              <span class="statement-summary__label">Débitos</span>
+              <strong class="amount--debit">−{{ totals.debitTotal | brl }}</strong>
+              <small>{{ totals.debitCount }} lançamentos</small>
+            </div>
+            <div class="statement-summary__item">
+              <span class="statement-summary__label">Resultado do período</span>
+              <strong
+                [class.amount--credit]="periodResult() >= 0"
+                [class.amount--debit]="periodResult() < 0"
+                >{{ periodResult() | brl }}</strong
+              >
+              <small>créditos menos débitos</small>
+            </div>
           </div>
-          <div class="statement-summary__item">
-            <span class="statement-summary__label">Débitos</span>
-            <strong class="amount--debit">−{{ (summary()?.debitTotal ?? 0) | brl }}</strong>
-            <small>{{ summary()?.debitCount ?? 0 }} lançamentos</small>
-          </div>
-          <div class="statement-summary__item">
-            <span class="statement-summary__label">Resultado do período</span>
-            <strong
-              [class.amount--credit]="periodResult() >= 0"
-              [class.amount--debit]="periodResult() < 0"
-              >{{ periodResult() | brl }}</strong
-            >
-            <small>créditos menos débitos</small>
-          </div>
-        </div>
+        }
 
         @switch (status()) {
           @case ('loading') {
