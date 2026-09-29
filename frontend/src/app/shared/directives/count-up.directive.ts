@@ -20,7 +20,7 @@ export class CountUpDirective {
 
     const from = this.current;
 
-    if (from === target || window.matchMedia(reducedMotionQuery).matches) {
+    if (from === target || this.prefersReducedMotion()) {
       this.settle(target);
       return;
     }
@@ -48,6 +48,14 @@ export class CountUpDirective {
   private settle(target: number): void {
     this.current = target;
     this.render(target);
+  }
+
+  private prefersReducedMotion(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia(reducedMotionQuery).matches
+    );
   }
 
   private render(value: number): void {
