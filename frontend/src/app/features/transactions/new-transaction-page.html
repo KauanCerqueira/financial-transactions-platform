@@ -9,6 +9,7 @@
   @if (status() === 'success' && result(); as outcome) {
     <div class="result" [class.result--replay]="outcome.alreadyProcessed" role="status">
       <p class="result__title">
+        <app-icon [name]="outcome.alreadyProcessed ? 'history' : 'check'" />
         {{ outcome.alreadyProcessed ? 'Evento já processado' : 'Lançamento registrado' }}
       </p>
 
@@ -30,15 +31,19 @@
       </div>
 
       <div class="result__actions">
-        <button matButton="filled" (click)="submitAnother()">Lançar outra</button>
-        <a matButton [routerLink]="['/accounts', outcome.transaction.accountId, 'statement']">Ver extrato</a>
+        <button matButton="filled" (click)="submitAnother()">
+          <app-icon name="add" class="icon-gap" />Lançar outra
+        </button>
+        <a matButton [routerLink]="['/accounts', outcome.transaction.accountId, 'statement']">
+          Ver extrato<app-icon name="chevron-right" class="icon-gap-left" />
+        </a>
       </div>
     </div>
   } @else {
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
       @if (error(); as failure) {
         <div class="state state--error" role="alert">
-          <p class="state__title">Não foi possível lançar ({{ failure.code }})</p>
+          <p class="state__title"><app-icon name="alert" />Não foi possível lançar ({{ failure.code }})</p>
           <p class="state__text">{{ failure.message }}</p>
         </div>
       }
@@ -96,6 +101,7 @@
 
       <div>
         <button matButton="filled" type="submit" [disabled]="submitting()">
+          <app-icon name="add" class="icon-gap" />
           {{ submitting() ? 'Enviando…' : 'Lançar transação' }}
         </button>
       </div>

@@ -10,14 +10,16 @@
         }
       </p>
     </div>
-    <a matButton="filled" routerLink="/transactions/new">Lançar transação</a>
+    <a matButton="filled" routerLink="/transactions/new">
+      <app-icon name="add" class="icon-gap" />Lançar transação
+    </a>
   </header>
 
   @if (account(); as current) {
     <div class="summary">
       <div class="summary__item">
         <span class="summary__label">Saldo atual</span>
-        <span class="summary__value value">{{ current.balance | brl }}</span>
+        <span class="summary__value value" [appCountUp]="current.balance"></span>
       </div>
       <div class="summary__item">
         <span class="summary__label">Lançamentos</span>
@@ -37,16 +39,18 @@
 
     @case ('error') {
       <div class="state state--error" role="alert">
-        <p class="state__title">Não foi possível carregar o extrato</p>
+        <p class="state__title"><app-icon name="alert" />Não foi possível carregar o extrato</p>
         <p class="state__text">{{ error() }}</p>
-        <button matButton="filled" (click)="reload()">Tentar de novo</button>
+        <button matButton="filled" (click)="reload()">
+          <app-icon name="refresh" class="icon-gap" />Tentar de novo
+        </button>
       </div>
     }
 
     @default {
       @if (items().length === 0) {
         <div class="state">
-          <p class="state__title">Nenhum lançamento nesta conta</p>
+          <p class="state__title"><app-icon name="history" />Nenhum lançamento nesta conta</p>
           <p class="state__text">Os lançamentos aparecem aqui conforme forem registrados.</p>
         </div>
       } @else {

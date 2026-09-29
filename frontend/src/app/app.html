@@ -8,13 +8,15 @@
 
     <span class="shell__spacer"></span>
 
-    <a matButton="filled" routerLink="/transactions/new">Lançar transação</a>
+    <a matButton="filled" routerLink="/transactions/new">
+      <app-icon name="add" class="icon-gap" />Lançar transação
+    </a>
   </header>
 
   <div class="shell__body">
     <nav class="shell__nav" aria-label="Navegação principal">
-      <a routerLink="/accounts" routerLinkActive="is-active">Contas</a>
-      <a routerLink="/transactions/new" routerLinkActive="is-active">Lançar</a>
+      <a routerLink="/accounts" routerLinkActive="is-active"><app-icon name="accounts" />Contas</a>
+      <a routerLink="/transactions/new" routerLinkActive="is-active"><app-icon name="add" />Lançar</a>
     </nav>
 
     <main class="shell__content">

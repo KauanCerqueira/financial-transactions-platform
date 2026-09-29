@@ -2,7 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { Store } from '@ngrx/store';
+import { CountUpDirective } from '../../shared/directives/count-up.directive';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
+import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from './state/accounts.actions';
 import {
   selectAccounts,
@@ -14,7 +16,7 @@ import {
 
 @Component({
   selector: 'app-accounts-page',
-  imports: [RouterLink, MatButton, CurrencyBrlPipe],
+  imports: [RouterLink, MatButton, CurrencyBrlPipe, CountUpDirective, Icon],
   templateUrl: './accounts-page.html',
 })
 export class AccountsPage implements OnInit {

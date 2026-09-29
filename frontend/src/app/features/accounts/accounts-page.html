@@ -4,7 +4,9 @@
       <h1>Contas</h1>
       <p class="page__subtitle">Saldo consolidado das contas dos clientes.</p>
     </div>
-    <button matButton (click)="reload()" [disabled]="loading()">Atualizar</button>
+    <button matButton (click)="reload()" [disabled]="loading()">
+      <app-icon name="refresh" class="icon-gap" />Atualizar
+    </button>
   </header>
 
   @switch (status()) {
@@ -18,23 +20,25 @@
 
     @case ('error') {
       <div class="state state--error" role="alert">
-        <p class="state__title">Não foi possível carregar as contas</p>
+        <p class="state__title"><app-icon name="alert" />Não foi possível carregar as contas</p>
         <p class="state__text">{{ error() }}</p>
-        <button matButton="filled" (click)="reload()">Tentar de novo</button>
+        <button matButton="filled" (click)="reload()">
+          <app-icon name="refresh" class="icon-gap" />Tentar de novo
+        </button>
       </div>
     }
 
     @default {
       @if (accounts().length === 0) {
         <div class="state">
-          <p class="state__title">Nenhuma conta cadastrada</p>
+          <p class="state__title"><app-icon name="accounts" />Nenhuma conta cadastrada</p>
           <p class="state__text">Quando houver contas, elas aparecem aqui.</p>
         </div>
       } @else {
         <div class="summary">
           <div class="summary__item">
             <span class="summary__label">Saldo total</span>
-            <span class="summary__value value">{{ totalBalance() | brl }}</span>
+            <span class="summary__value value" [appCountUp]="totalBalance()"></span>
           </div>
           <div class="summary__item">
             <span class="summary__label">Contas</span>
@@ -57,7 +61,9 @@
                   <td>{{ account.holderName }}</td>
                   <td class="table__number value">{{ account.balance | brl }}</td>
                   <td class="table__action">
-                    <a matButton [routerLink]="['/accounts', account.id, 'statement']">Ver extrato</a>
+                    <a matButton [routerLink]="['/accounts', account.id, 'statement']">
+                      Ver extrato<app-icon name="chevron-right" class="icon-gap-left" />
+                    </a>
                   </td>
                 </tr>
               }

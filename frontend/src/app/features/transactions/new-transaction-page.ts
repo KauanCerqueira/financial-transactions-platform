@@ -5,6 +5,7 @@ import { MatButton } from '@angular/material/button';
 import { Store } from '@ngrx/store';
 import { ProcessTransactionCommand, TransactionType } from '../../core/models/transaction';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
+import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
 import * as TransactionsActions from './state/transactions.actions';
@@ -17,7 +18,7 @@ import {
 
 @Component({
   selector: 'app-new-transaction-page',
-  imports: [ReactiveFormsModule, RouterLink, MatButton, CurrencyBrlPipe],
+  imports: [ReactiveFormsModule, RouterLink, MatButton, CurrencyBrlPipe, Icon],
   templateUrl: './new-transaction-page.html',
 })
 export class NewTransactionPage implements OnInit {

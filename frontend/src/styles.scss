@@ -83,6 +83,7 @@ body {
 .page {
   max-width: 1200px;
   margin: 0 auto;
+  animation: fraga-page-enter 260ms ease-out both;
 }
 
 .page__head {
@@ -235,6 +236,9 @@ body {
 }
 
 .state__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-weight: 600;
 }
@@ -345,6 +349,9 @@ body {
 }
 
 .result__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-weight: 700;
   color: var(--fraga-success);
@@ -440,6 +447,38 @@ body {
   .statement__balance {
     grid-column: 1 / -1;
     text-align: left;
+  }
+}
+
+app-icon {
+  display: inline-flex;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+app-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.icon-gap {
+  margin-right: 8px;
+}
+
+.icon-gap-left {
+  margin-left: 4px;
+}
+
+@keyframes fraga-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 

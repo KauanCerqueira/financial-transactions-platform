@@ -65,6 +65,9 @@
   border-right: 1px solid var(--fraga-line-dark);
 
   a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     padding: 10px 14px;
     border-radius: var(--fraga-radius-sm);
     font-size: 15px;

@@ -3,8 +3,10 @@ import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Store } from '@ngrx/store';
+import { CountUpDirective } from '../../shared/directives/count-up.directive';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
 import { DateTimeBrPipe } from '../../shared/pipes/date-time-br.pipe';
+import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
 import * as StatementActions from './state/statement.actions';
@@ -19,7 +21,7 @@ import {
 
 @Component({
   selector: 'app-statement-page',
-  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateTimeBrPipe],
+  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateTimeBrPipe, CountUpDirective, Icon],
   templateUrl: './statement-page.html',
 })
 export class StatementPage implements OnInit {
