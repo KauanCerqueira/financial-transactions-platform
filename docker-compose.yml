@@ -15,23 +15,6 @@ services:
       timeout: 5s
       retries: 10
 
-  api:
-    build:
-      context: ./backend
-      dockerfile: src/FinancialTransactions.Api/Dockerfile
-    environment:
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=financial_transactions;Username=postgres;Password=postgres"
-      ConnectionStrings__Redis: "redis:6379"
-      ASPNETCORE_ENVIRONMENT: Production
-      Observability__ElasticsearchUri: "${ELASTICSEARCH_URI:-}"
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
   redis:
     image: redis:7-alpine
     ports:
@@ -41,6 +24,56 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/FinancialTransactions.Api/Dockerfile
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=financial_transactions;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
+      RabbitMq__Uri: "amqp://guest:guest@rabbitmq:5672"
+      RabbitMq__QueueName: "transactions"
+      ASPNETCORE_ENVIRONMENT: Production
+      Observability__ElasticsearchUri: "${ELASTICSEARCH_URI:-}"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: src/FinancialTransactions.Worker/Dockerfile
+    environment:
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=financial_transactions;Username=postgres;Password=postgres"
+      ConnectionStrings__Redis: "redis:6379"
+      RabbitMq__Uri: "amqp://guest:guest@rabbitmq:5672"
+      RabbitMq__QueueName: "transactions"
+      DOTNET_ENVIRONMENT: Production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   # Opcional: suba com `docker compose --profile observability up`
   # e defina ELASTICSEARCH_URI=http://elasticsearch:9200 para indexar os logs.

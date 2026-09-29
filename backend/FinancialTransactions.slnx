@@ -4,6 +4,7 @@
     <Project Path="src/FinancialTransactions.Application/FinancialTransactions.Application.csproj" />
     <Project Path="src/FinancialTransactions.Domain/FinancialTransactions.Domain.csproj" />
     <Project Path="src/FinancialTransactions.Infrastructure/FinancialTransactions.Infrastructure.csproj" />
+    <Project Path="src/FinancialTransactions.Worker/FinancialTransactions.Worker.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FinancialTransactions.IntegrationTests/FinancialTransactions.IntegrationTests.csproj" />

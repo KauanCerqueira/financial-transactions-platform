@@ -10,3 +10,5 @@ export const selectSubmissionResult = createSelector(selectTransactionFormState,
 export const selectSubmissionError = createSelector(selectTransactionFormState, (state) => state.error);
 
 export const selectSubmitting = createSelector(selectSubmissionStatus, (status) => status === 'submitting');
+
+export const selectProcessing = createSelector(selectSubmissionStatus, (status) => status === 'processing');

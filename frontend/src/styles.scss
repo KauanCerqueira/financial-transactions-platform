@@ -366,6 +366,31 @@ body {
   color: #5a0380;
 }
 
+.result--processing {
+  background: #f6f7fb;
+  border-color: var(--fraga-line);
+}
+
+.result--processing .result__title {
+  color: var(--fraga-graphite-700);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--fraga-line);
+  border-top-color: var(--fraga-magenta);
+  border-radius: 50%;
+  animation: fraga-spin 700ms linear infinite;
+}
+
+@keyframes fraga-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .result__row {
   display: flex;
   justify-content: space-between;

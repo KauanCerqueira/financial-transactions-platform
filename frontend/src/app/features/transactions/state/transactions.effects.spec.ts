@@ -3,8 +3,8 @@ import { provideMockActions } from '@ngrx/effects/testing';
 import { Observable, ReplaySubject, firstValueFrom, of, throwError } from 'rxjs';
 import { TransactionsApi } from '../../../core/api/transactions-api';
 import { ApiError } from '../../../core/models/api-error';
-import { ProcessedTransaction } from '../../../core/models/processed-transaction';
 import { ProcessTransactionCommand } from '../../../core/models/transaction';
+import { TransactionAccepted } from '../../../core/models/transaction-event';
 import * as TransactionsActions from './transactions.actions';
 import { TransactionsEffects } from './transactions.effects';
 
@@ -16,28 +16,16 @@ const command: ProcessTransactionCommand = {
   occurredAt: '2026-01-30T10:00:00Z',
 };
 
-const processed: ProcessedTransaction = {
-  transaction: {
-    id: 't1',
-    eventId: 'e1',
-    accountId: 'a1',
-    type: 'CREDIT',
-    amount: 100,
-    occurredAt: '2026-01-30T10:00:00Z',
-    balanceAfter: 200,
-    recordedAt: '2026-01-30T10:00:00Z',
-  },
-  alreadyProcessed: false,
-};
+const pending: TransactionAccepted = { eventId: 'e1', status: 'PENDING', rejectionCode: null, transaction: null };
 
 describe('TransactionsEffects', () => {
   let actions$: Observable<unknown>;
   let effects: TransactionsEffects;
-  let api: { process: ReturnType<typeof vi.fn> };
+  let api: { enqueue: ReturnType<typeof vi.fn>; getStatus: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     actions$ = new ReplaySubject(1);
-    api = { process: vi.fn() };
+    api = { enqueue: vi.fn(), getStatus: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -50,24 +38,34 @@ describe('TransactionsEffects', () => {
     effects = TestBed.inject(TransactionsEffects);
   });
 
-  it('dispatches success when the API confirms the transaction', async () => {
-    api.process.mockReturnValue(of(processed));
+  it('dispatches accepted when the API enqueues the event', async () => {
+    api.enqueue.mockReturnValue(of(pending));
 
     const emitted = firstValueFrom(effects.submit);
     (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));
 
-    expect(await emitted).toEqual(TransactionsActions.submitTransactionSuccess({ result: processed }));
-    expect(api.process).toHaveBeenCalledWith(command);
+    expect(await emitted).toEqual(TransactionsActions.transactionAccepted({ result: pending }));
+    expect(api.enqueue).toHaveBeenCalledWith(command);
   });
 
-  it('dispatches failure with the business message when the API rejects', async () => {
-    api.process.mockReturnValue(throwError(() => new ApiError('INSUFFICIENT_FUNDS', 'Saldo insuficiente', 422)));
+  it('does not poll when the event is already resolved', async () => {
+    api.enqueue.mockReturnValue(of({ ...pending, status: 'PROCESSED' as const }));
+
+    const emitted = firstValueFrom(effects.submit);
+    (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));
+    await emitted;
+
+    expect(api.getStatus).not.toHaveBeenCalled();
+  });
+
+  it('dispatches failure when the API rejects the enqueue', async () => {
+    api.enqueue.mockReturnValue(throwError(() => new ApiError('NETWORK_ERROR', 'Sem conexão', 0)));
 
     const emitted = firstValueFrom(effects.submit);
     (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));
 
     expect(await emitted).toEqual(
-      TransactionsActions.submitTransactionFailure({ message: 'Saldo insuficiente', code: 'INSUFFICIENT_FUNDS' }),
+      TransactionsActions.submitTransactionFailure({ message: 'Sem conexão', code: 'NETWORK_ERROR' }),
     );
   });
 });

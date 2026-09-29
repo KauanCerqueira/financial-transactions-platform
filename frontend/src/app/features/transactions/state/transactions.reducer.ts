@@ -1,14 +1,15 @@
 import { createReducer, on } from '@ngrx/store';
-import { ProcessedTransaction } from '../../../core/models/processed-transaction';
+import { messageForCode } from '../../../core/models/api-messages';
+import { TransactionAccepted } from '../../../core/models/transaction-event';
 import * as TransactionsActions from './transactions.actions';
 
 export const transactionsFeatureKey = 'transactionForm';
 
-export type SubmissionStatus = 'idle' | 'submitting' | 'success' | 'error';
+export type SubmissionStatus = 'idle' | 'submitting' | 'processing' | 'success' | 'error';
 
 export interface TransactionFormState {
   status: SubmissionStatus;
-  result: ProcessedTransaction | null;
+  result: TransactionAccepted | null;
   error: { message: string; code: string } | null;
 }
 
@@ -26,11 +27,17 @@ export const transactionsReducer = createReducer(
     result: null,
     error: null,
   })),
-  on(TransactionsActions.submitTransactionSuccess, (state, { result }) => ({
+  on(TransactionsActions.transactionAccepted, (state, { result }) => ({
     ...state,
-    status: 'success' as SubmissionStatus,
     result,
-    error: null,
+    status: result.status === 'PENDING' ? ('processing' as SubmissionStatus) : statusOf(result),
+    error: result.status === 'REJECTED' ? rejectionOf(result) : null,
+  })),
+  on(TransactionsActions.transactionResolved, (state, { result }) => ({
+    ...state,
+    result,
+    status: statusOf(result),
+    error: result.status === 'REJECTED' ? rejectionOf(result) : null,
   })),
   on(TransactionsActions.submitTransactionFailure, (state, { message, code }) => ({
     ...state,
@@ -40,3 +47,21 @@ export const transactionsReducer = createReducer(
   })),
   on(TransactionsActions.clearTransactionResult, () => initialState),
 );
+
+function statusOf(result: TransactionAccepted): SubmissionStatus {
+  if (result.status === 'PROCESSED') {
+    return 'success';
+  }
+
+  if (result.status === 'REJECTED') {
+    return 'error';
+  }
+
+  return 'processing';
+}
+
+function rejectionOf(result: TransactionAccepted): { message: string; code: string } {
+  const code = result.rejectionCode ?? 'REJECTED';
+
+  return { code, message: messageForCode(code, 'O lançamento foi rejeitado.') };
+}

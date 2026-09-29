@@ -1,17 +1,14 @@
-import { ProcessedTransaction } from '../../../core/models/processed-transaction';
-import { ProcessTransactionCommand } from '../../../core/models/transaction';
+import { TransactionAccepted } from '../../../core/models/transaction-event';
 import * as TransactionsActions from './transactions.actions';
 import { transactionsReducer } from './transactions.reducer';
 
-const command: ProcessTransactionCommand = {
-  eventId: 'e1',
-  accountId: 'a1',
-  type: 'CREDIT',
-  amount: 100,
-  occurredAt: '2026-01-30T10:00:00Z',
-};
+const command = { eventId: 'e1', accountId: 'a1', type: 'CREDIT' as const, amount: 100, occurredAt: '2026-01-30T10:00:00Z' };
 
-const processed: ProcessedTransaction = {
+const pending: TransactionAccepted = { eventId: 'e1', status: 'PENDING', rejectionCode: null, transaction: null };
+const processed: TransactionAccepted = {
+  eventId: 'e1',
+  status: 'PROCESSED',
+  rejectionCode: null,
   transaction: {
     id: 't1',
     eventId: 'e1',
@@ -22,7 +19,12 @@ const processed: ProcessedTransaction = {
     balanceAfter: 200,
     recordedAt: '2026-01-30T10:00:00Z',
   },
-  alreadyProcessed: false,
+};
+const rejected: TransactionAccepted = {
+  eventId: 'e1',
+  status: 'REJECTED',
+  rejectionCode: 'INSUFFICIENT_FUNDS',
+  transaction: null,
 };
 
 describe('transactionsReducer', () => {
@@ -31,31 +33,35 @@ describe('transactionsReducer', () => {
 
     expect(state.status).toBe('submitting');
     expect(state.result).toBeNull();
-    expect(state.error).toBeNull();
   });
 
-  it('stores the result on success', () => {
-    const state = transactionsReducer(undefined, TransactionsActions.submitTransactionSuccess({ result: processed }));
+  it('marks processing while the queue still has the event pending', () => {
+    const state = transactionsReducer(undefined, TransactionsActions.transactionAccepted({ result: pending }));
+
+    expect(state.status).toBe('processing');
+    expect(state.result).toEqual(pending);
+  });
+
+  it('marks success when the event is processed', () => {
+    const state = transactionsReducer(undefined, TransactionsActions.transactionResolved({ result: processed }));
 
     expect(state.status).toBe('success');
     expect(state.result).toEqual(processed);
+    expect(state.error).toBeNull();
   });
 
-  it('stores the business error on failure', () => {
-    const state = transactionsReducer(
-      undefined,
-      TransactionsActions.submitTransactionFailure({ message: 'Saldo insuficiente', code: 'INSUFFICIENT_FUNDS' }),
-    );
+  it('maps a rejection to a business message', () => {
+    const state = transactionsReducer(undefined, TransactionsActions.transactionResolved({ result: rejected }));
 
     expect(state.status).toBe('error');
-    expect(state.error).toEqual({ message: 'Saldo insuficiente', code: 'INSUFFICIENT_FUNDS' });
+    expect(state.error).toEqual({
+      code: 'INSUFFICIENT_FUNDS',
+      message: 'Saldo insuficiente para esta movimentação.',
+    });
   });
 
   it('clears back to idle', () => {
-    const failed = transactionsReducer(
-      undefined,
-      TransactionsActions.submitTransactionFailure({ message: 'x', code: 'y' }),
-    );
+    const failed = transactionsReducer(undefined, TransactionsActions.transactionResolved({ result: rejected }));
 
     const state = transactionsReducer(failed, TransactionsActions.clearTransactionResult());
 

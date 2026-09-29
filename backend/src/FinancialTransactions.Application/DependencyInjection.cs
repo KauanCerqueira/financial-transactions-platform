@@ -9,8 +9,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddScoped<IGetAccountsUseCase, GetAccountsUseCase>();
-        services.AddScoped<IProcessTransactionUseCase, ProcessTransactionUseCase>();
         services.AddScoped<IGetStatementUseCase, GetStatementUseCase>();
+        services.AddScoped<IProcessTransactionUseCase, ProcessTransactionUseCase>();
+        services.AddScoped<IEnqueueTransactionUseCase, EnqueueTransactionUseCase>();
+        services.AddScoped<IGetTransactionEventUseCase, GetTransactionEventUseCase>();
 
         return services;
     }

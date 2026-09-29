@@ -10,6 +10,7 @@ import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
 import * as TransactionsActions from './state/transactions.actions';
 import {
+  selectProcessing,
   selectSubmissionError,
   selectSubmissionResult,
   selectSubmissionStatus,
@@ -28,6 +29,7 @@ export class NewTransactionPage implements OnInit {
   readonly accounts = this.store.selectSignal(selectAccounts);
   readonly status = this.store.selectSignal(selectSubmissionStatus);
   readonly submitting = this.store.selectSignal(selectSubmitting);
+  readonly processing = this.store.selectSignal(selectProcessing);
   readonly result = this.store.selectSignal(selectSubmissionResult);
   readonly error = this.store.selectSignal(selectSubmissionError);
 

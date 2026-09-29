@@ -7,6 +7,7 @@ using FinancialTransactions.Api.Startup;
 using FinancialTransactions.Application;
 using FinancialTransactions.Infrastructure;
 using FinancialTransactions.Infrastructure.Persistence;
+using FinancialTransactions.Infrastructure.Messaging;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -40,7 +41,14 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
     }
 });
 
-builder.Services.AddInfrastructure(connectionString, builder.Configuration.GetConnectionString("Redis"));
+builder.Services.AddInfrastructure(
+    connectionString,
+    builder.Configuration.GetConnectionString("Redis"),
+    new RabbitMqOptions
+    {
+        Uri = builder.Configuration["RabbitMq:Uri"] ?? string.Empty,
+        QueueName = builder.Configuration["RabbitMq:QueueName"] ?? "transactions"
+    });
 builder.Services.AddApplication();
 builder.Services.AddSingleton(TimeProvider.System);
 

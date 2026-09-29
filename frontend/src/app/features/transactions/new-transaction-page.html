@@ -7,47 +7,56 @@
   </header>
 
   @if (status() === 'success' && result(); as outcome) {
-    <div class="result" [class.result--replay]="outcome.alreadyProcessed" role="status">
-      <p class="result__title">
-        <app-icon [name]="outcome.alreadyProcessed ? 'history' : 'check'" />
-        {{ outcome.alreadyProcessed ? 'Evento já processado' : 'Lançamento registrado' }}
+    @if (outcome.transaction; as transaction) {
+      <div class="result" role="status">
+        <p class="result__title"><app-icon name="check" />Lançamento registrado</p>
+
+        <div class="result__row">
+          <span class="result__label">Conta</span>
+          <span>{{ accountName(transaction.accountId) }}</span>
+        </div>
+        <div class="result__row">
+          <span class="result__label">Tipo</span>
+          <span>{{ transaction.type === 'CREDIT' ? 'Crédito' : 'Débito' }}</span>
+        </div>
+        <div class="result__row">
+          <span class="result__label">Valor</span>
+          <span class="value">{{ transaction.amount | brl }}</span>
+        </div>
+        <div class="result__row">
+          <span class="result__label">Saldo após</span>
+          <span class="value">{{ transaction.balanceAfter | brl }}</span>
+        </div>
+
+        <div class="result__actions">
+          <button matButton="filled" (click)="submitAnother()">
+            <app-icon name="add" class="icon-gap" />Lançar outra
+          </button>
+          <a matButton [routerLink]="['/accounts', transaction.accountId, 'statement']">
+            Ver extrato<app-icon name="chevron-right" class="icon-gap-left" />
+          </a>
+        </div>
+      </div>
+    }
+  } @else if (status() === 'processing') {
+    <div class="result result--processing" role="status">
+      <p class="result__title"><span class="spinner"></span>Processando…</p>
+      <p class="state__text">
+        O lançamento foi recebido e está na fila para ser processado. O saldo atualiza em instantes.
       </p>
-
-      <div class="result__row">
-        <span class="result__label">Conta</span>
-        <span>{{ accountName(outcome.transaction.accountId) }}</span>
-      </div>
-      <div class="result__row">
-        <span class="result__label">Tipo</span>
-        <span>{{ outcome.transaction.type === 'CREDIT' ? 'Crédito' : 'Débito' }}</span>
-      </div>
-      <div class="result__row">
-        <span class="result__label">Valor</span>
-        <span class="value">{{ outcome.transaction.amount | brl }}</span>
-      </div>
-      <div class="result__row">
-        <span class="result__label">Saldo após</span>
-        <span class="value">{{ outcome.transaction.balanceAfter | brl }}</span>
-      </div>
-
-      <div class="result__actions">
-        <button matButton="filled" (click)="submitAnother()">
-          <app-icon name="add" class="icon-gap" />Lançar outra
-        </button>
-        <a matButton [routerLink]="['/accounts', outcome.transaction.accountId, 'statement']">
-          Ver extrato<app-icon name="chevron-right" class="icon-gap-left" />
-        </a>
-      </div>
     </div>
+  } @else if (status() === 'error') {
+    @if (error(); as failure) {
+      <div class="state state--error" role="alert">
+        <p class="state__title"><app-icon name="alert" />Não foi possível lançar ({{ failure.code }})</p>
+        <p class="state__text">{{ failure.message }}</p>
+        <div class="result__actions">
+          <button matButton="filled" (click)="submitAnother()">Tentar outro</button>
+        </div>
+      </div>
+    }
   } @else {
     <form class="form" [formGroup]="form" (ngSubmit)="submit()">
-      @if (error(); as failure) {
-        <div class="state state--error" role="alert">
-          <p class="state__title"><app-icon name="alert" />Não foi possível lançar ({{ failure.code }})</p>
-          <p class="state__text">{{ failure.message }}</p>
-        </div>
-      }
-
       <div class="field">
         <label class="field__label" for="accountId">Conta</label>
         <select id="accountId" formControlName="accountId">

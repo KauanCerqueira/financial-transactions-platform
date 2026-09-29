@@ -1,17 +1,21 @@
 import { createAction, props } from '@ngrx/store';
-import { ProcessedTransaction } from '../../../core/models/processed-transaction';
 import { ProcessTransactionCommand } from '../../../core/models/transaction';
+import { TransactionAccepted } from '../../../core/models/transaction-event';
 
 export const submitTransaction = createAction(
   '[Transaction form] Submit',
   props<{ command: ProcessTransactionCommand }>(),
 );
-export const submitTransactionSuccess = createAction(
-  '[Transaction form] Submit success',
-  props<{ result: ProcessedTransaction }>(),
+export const transactionAccepted = createAction(
+  '[Transaction form] Accepted',
+  props<{ result: TransactionAccepted }>(),
+);
+export const transactionResolved = createAction(
+  '[Transaction form] Resolved',
+  props<{ result: TransactionAccepted }>(),
 );
 export const submitTransactionFailure = createAction(
-  '[Transaction form] Submit failure',
+  '[Transaction form] Failure',
   props<{ message: string; code: string }>(),
 );
-export const clearTransactionResult = createAction('[Transaction form] Clear result');
+export const clearTransactionResult = createAction('[Transaction form] Clear');
