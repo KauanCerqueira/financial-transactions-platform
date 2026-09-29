@@ -40,7 +40,8 @@ O enunciado que originou o projeto está em
 | ![Saldo insuficiente](docs/prints/06-saldo-insuficiente.png) |
 
 > Os prints são gerados pelo próprio projeto, com `npm run prints` (Playwright), a partir da aplicação
-> em execução — assim nunca ficam desatualizados.
+> em execução — se o banco estiver vazio, o script cria o cenário de demonstração pela API. Assim as
+> imagens nunca ficam desatualizadas.
 
 ---
 
@@ -54,8 +55,9 @@ docker compose up --build
 
 Abra **http://localhost:4200** e entre com **`operador` / `operador123`**.
 
-Na primeira subida a aplicação cria **três contas com histórico de lançamentos** de demonstração — o
-extrato já nasce com créditos, débitos e paginação para explorar.
+A aplicação sobe **vazia**, sem dados de demonstração: a primeira conta é criada na própria interface,
+em **Nova Conta**. Para ver o sistema com dados, o `npm run prints` cria um cenário de demonstração
+pela própria API quando o banco está vazio — é o caminho usado nas imagens deste README.
 
 | Serviço | Endereço | Observação |
 |---|---|---|
@@ -65,7 +67,7 @@ extrato já nasce com créditos, débitos e paginação para explorar.
 | RabbitMQ | http://localhost:15672 | guest / guest |
 | PostgreSQL | localhost:5433 | postgres / postgres |
 
-Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `docker compose down -v`.
+Para encerrar: `docker compose down`. Para apagar os dados: `docker compose down -v`.
 
 > Observabilidade opcional (logs indexados no Elasticsearch):
 > `ELASTICSEARCH_URI=http://elasticsearch:9200 docker compose --profile observability up`

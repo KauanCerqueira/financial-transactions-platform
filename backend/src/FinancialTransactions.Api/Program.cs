@@ -155,7 +155,7 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
     ResponseWriter = HealthCheckResponseWriter.WriteAsync
 }).AllowAnonymous();
 
-await app.ApplyMigrationsAndSeedAsync();
+await app.ApplyMigrationsAsync();
 
 app.Run();
 

@@ -4,17 +4,20 @@ import { login } from './session';
 test('seleciona a conta na lista e mostra o extrato abaixo', async ({ page }) => {
   await login(page);
 
-  await expect(page.locator('.statement-head h2')).toHaveText('Ana Souza');
+  await page.locator('.accounts-table tbody tr', { hasText: 'Helena Ribeiro' }).click();
 
-  await page.locator('.accounts-table tbody tr').nth(1).click();
+  await expect(page.locator('.statement-head h2')).toHaveText('Helena Ribeiro');
+  await expect(page.locator('.statement-table tbody tr').first()).toBeVisible();
 
-  await expect(page.locator('.statement-head h2')).toHaveText('Bruno Lima');
-  await expect(page.locator('.statement-head .identifier')).toHaveText('#22222222');
-  await expect(page.locator('.statement-head__balance strong')).toContainText('R$');
+  await page.locator('.accounts-table tbody tr', { hasText: 'Marcos Tavares' }).click();
+
+  await expect(page.locator('.statement-head h2')).toHaveText('Marcos Tavares');
 });
 
 test('filtra o extrato por tipo e o resumo acompanha o filtro', async ({ page }) => {
   await login(page);
+
+  await page.locator('.accounts-table tbody tr', { hasText: 'Helena Ribeiro' }).click();
 
   const summary = page.locator('.statement-summary');
   await expect(summary).toContainText('Créditos');
@@ -32,11 +35,11 @@ test('filtra o extrato por tipo e o resumo acompanha o filtro', async ({ page })
 test('mostra a aba de informações com dados reais da conta', async ({ page }) => {
   await login(page);
 
+  await page.locator('.accounts-table tbody tr', { hasText: 'Sofia Andrade' }).click();
   await page.getByRole('tab', { name: 'Informações' }).click();
 
   const info = page.locator('.info-grid');
   await expect(info.getByText('Titular')).toBeVisible();
-  await expect(info.getByText('Ana Souza')).toBeVisible();
-  await expect(info.getByText('#11111111')).toBeVisible();
+  await expect(info.getByText('Sofia Andrade')).toBeVisible();
   await expect(info.getByText('Criada em')).toBeVisible();
 });

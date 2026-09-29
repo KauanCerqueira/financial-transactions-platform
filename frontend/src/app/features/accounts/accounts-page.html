@@ -35,7 +35,10 @@
       @if (accounts().length === 0) {
         <div class="state">
           <p class="state__title"><app-icon name="accounts" />Nenhuma conta cadastrada</p>
-          <p class="state__text">Quando houver contas, elas aparecem aqui.</p>
+          <p class="state__text">Cadastre a primeira conta para começar a movimentar.</p>
+          <a matButton="filled" routerLink="/accounts/new">
+            <app-icon name="add" class="icon-gap" />Criar primeira conta
+          </a>
         </div>
       } @else {
         <div class="summary">

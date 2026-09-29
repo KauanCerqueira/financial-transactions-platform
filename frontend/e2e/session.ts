@@ -1,7 +1,5 @@
 import { Page, expect } from '@playwright/test';
 
-export const seededAccountId = '11111111-1111-1111-1111-111111111111';
-
 export async function login(page: Page): Promise<void> {
   await page.goto('/accounts');
 
