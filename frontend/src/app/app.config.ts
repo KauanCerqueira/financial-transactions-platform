@@ -13,6 +13,7 @@ import { accountsFeatureKey, accountsReducer } from './features/accounts/state/a
 import { StatementEffects } from './features/statement/state/statement.effects';
 import { statementFeatureKey, statementReducer } from './features/statement/state/statement.reducer';
 import { TransactionsEffects } from './features/transactions/state/transactions.effects';
+import { TransactionsNotifications } from './features/transactions/state/transactions-notifications';
 import { transactionsFeatureKey, transactionsReducer } from './features/transactions/state/transactions.reducer';
 import { routes } from './app.routes';
 
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
     provideState(accountsFeatureKey, accountsReducer),
     provideState(statementFeatureKey, statementReducer),
     provideState(transactionsFeatureKey, transactionsReducer),
-    provideEffects(AccountsEffects, StatementEffects, TransactionsEffects),
+    provideEffects(AccountsEffects, StatementEffects, TransactionsEffects, TransactionsNotifications),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
 
     { provide: MatPaginatorIntl, useClass: PtBrPaginatorIntl },
