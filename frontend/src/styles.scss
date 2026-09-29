@@ -19,6 +19,7 @@ html {
   --fraga-muted: #657087;
   --fraga-muted-strong: #49566c;
   --fraga-red: #eb0015;
+  --fraga-red-strong: #c8000f;
   --fraga-success: #00874f;
   --mat-sys-primary: #e60012;
   --mat-sys-on-primary: #fff;
@@ -135,7 +136,7 @@ h2 {
 }
 .summary {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
   margin-bottom: 16px;
 }
