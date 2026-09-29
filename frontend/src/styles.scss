@@ -1,0 +1,67 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$rose-palette,
+        tertiary: mat.$violet-palette,
+      ),
+      typography: Archivo,
+      density: -1,
+    )
+  );
+}
+
+:root {
+  --fraga-graphite-950: #1c1c1e;
+  --fraga-graphite-900: #26262a;
+  --fraga-graphite-700: #414042;
+  --fraga-line-dark: #3a3a3e;
+
+  --fraga-ink: #1f1f22;
+  --fraga-paper: #ffffff;
+  --fraga-cloud: #f5f5f7;
+  --fraga-line: #e4e4e8;
+
+  --fraga-magenta: #ff0049;
+  --fraga-magenta-strong: #e0003f;
+  --fraga-purple: #8a05be;
+  --fraga-yellow: #ffcf01;
+  --fraga-success: #1b7f4b;
+
+  --fraga-radius: 12px;
+  --fraga-radius-sm: 8px;
+
+  --mat-sys-primary: var(--fraga-magenta-strong);
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: #ffe1e8;
+  --mat-sys-on-primary-container: #3d0013;
+  --mat-sys-tertiary: var(--fraga-purple);
+  --mat-sys-on-tertiary: #ffffff;
+  --mat-sys-surface: var(--fraga-paper);
+  --mat-sys-surface-container: var(--fraga-cloud);
+  --mat-sys-on-surface: var(--fraga-ink);
+  --mat-sys-outline-variant: var(--fraga-line);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color-scheme: light;
+  background: var(--fraga-cloud);
+  color: var(--fraga-ink);
+  font-family: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.value {
+  font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  font-variant-numeric: tabular-nums;
+}
