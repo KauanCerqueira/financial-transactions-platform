@@ -12,6 +12,9 @@ banco) e cada uma tem teste.
 > usada aqui apenas como referência estética para um projeto de avaliação técnica. Não há vínculo
 > institucional, os dados são fictícios e nenhuma operação financeira real acontece.
 
+O enunciado que originou o projeto está em
+[`docs/enunciado-fullstack-pleno.pdf`](docs/enunciado-fullstack-pleno.pdf).
+
 ---
 
 ## Telas
