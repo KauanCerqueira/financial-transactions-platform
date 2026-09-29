@@ -40,7 +40,7 @@ describe('NewTransactionPage', () => {
     });
 
     const store = TestBed.inject(MockStore);
-    const dispatch = vi.spyOn(store, 'dispatch');
+    const dispatch = spyOn(store, 'dispatch');
     const fixture = TestBed.createComponent(NewTransactionPage);
     fixture.detectChanges();
 
@@ -48,9 +48,8 @@ describe('NewTransactionPage', () => {
   }
 
   it('does not dispatch when the form is invalid', () => {
-    const { component, store } = setup();
-    const dispatch = vi.spyOn(store, 'dispatch');
-    dispatch.mockClear();
+    const { component, dispatch } = setup();
+    dispatch.calls.reset();
 
     component.submit();
 
@@ -59,15 +58,13 @@ describe('NewTransactionPage', () => {
   });
 
   it('dispatches a submit action with a fresh eventId and ISO date', () => {
-    const { component, store } = setup();
-    const dispatch = vi.spyOn(store, 'dispatch');
-    dispatch.mockClear();
+    const { component, dispatch } = setup();
+    dispatch.calls.reset();
 
     component.form.patchValue({ accountId: 'a1', amount: 25.5, type: 'DEBIT' });
     component.submit();
 
-    const calls = dispatch.mock.calls as unknown as unknown[][];
-    const action = calls[0][0] as {
+    const action = dispatch.calls.argsFor(0)[0] as unknown as {
       type: string;
       command: {
         accountId: string;
@@ -100,17 +97,16 @@ describe('NewTransactionPage', () => {
   });
 
   it('retries a failed request using its original eventId', () => {
-    const { component, store } = setup({
+    const { component, dispatch } = setup({
       status: 'error',
       message: 'Sem conexão',
       code: 'NETWORK_ERROR',
     });
-    const dispatch = vi.spyOn(store, 'dispatch');
 
     component.retry();
 
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ command: expect.objectContaining({ eventId: 'previous-event' }) }),
+      jasmine.objectContaining({ command: jasmine.objectContaining({ eventId: 'previous-event' }) }),
     );
   });
 
@@ -128,7 +124,7 @@ describe('NewTransactionPage', () => {
     const { dispatch } = setup();
 
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ command: expect.objectContaining({ eventId: 'saved-event' }) }),
+      jasmine.objectContaining({ command: jasmine.objectContaining({ eventId: 'saved-event' }) }),
     );
   });
 
@@ -140,7 +136,7 @@ describe('NewTransactionPage', () => {
     component.submit();
 
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ command: expect.objectContaining({ eventId: displayedEventId }) }),
+      jasmine.objectContaining({ command: jasmine.objectContaining({ eventId: displayedEventId }) }),
     );
   });
 

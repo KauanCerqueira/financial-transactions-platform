@@ -9,11 +9,11 @@ import { apiErrorInterceptor } from './api-error.interceptor';
 describe('apiErrorInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
-  const oidc = { logoffLocal: vi.fn(), authorize: vi.fn() };
+  const oidc = { logoffLocal: jasmine.createSpy('logoffLocal'), authorize: jasmine.createSpy('authorize') };
 
   beforeEach(() => {
-    oidc.logoffLocal.mockClear();
-    oidc.authorize.mockClear();
+    oidc.logoffLocal.calls.reset();
+    oidc.authorize.calls.reset();
 
     TestBed.configureTestingModule({
       providers: [

@@ -36,11 +36,11 @@ const processed: TransactionAccepted = {
 describe('TransactionsEffects', () => {
   let actions$: Observable<unknown>;
   let effects: TransactionsEffects;
-  let api: { process: ReturnType<typeof vi.fn> };
+  let api: { process: jasmine.Spy };
 
   beforeEach(() => {
     actions$ = new ReplaySubject(1);
-    api = { process: vi.fn() };
+    api = { process: jasmine.createSpy('process') };
 
     TestBed.configureTestingModule({
       providers: [
@@ -54,7 +54,7 @@ describe('TransactionsEffects', () => {
   });
 
   it('dispatches resolved when the API processes the transaction', async () => {
-    api.process.mockReturnValue(of(processed));
+    api.process.and.returnValue(of(processed));
 
     const emitted = firstValueFrom(effects.submit);
     (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));
@@ -64,7 +64,7 @@ describe('TransactionsEffects', () => {
   });
 
   it('dispatches failure with the business message when the API rejects', async () => {
-    api.process.mockReturnValue(throwError(() => new ApiError('INSUFFICIENT_FUNDS', 'Saldo insuficiente', 422)));
+    api.process.and.returnValue(throwError(() => new ApiError('INSUFFICIENT_FUNDS', 'Saldo insuficiente', 422)));
 
     const emitted = firstValueFrom(effects.submit);
     (actions$ as ReplaySubject<unknown>).next(TransactionsActions.submitTransaction({ command }));

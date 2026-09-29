@@ -152,15 +152,15 @@ testar, e os erros de negócio voltam como `ProblemDetails` com um `code`
 ```bash
 dotnet test backend/FinancialTransactions.slnx   # 54 no backend
 cd frontend
-npm test -- --watch=false                        # 40 no frontend
+npm test -- --watch=false                        # 40 no frontend (Jasmine/Karma)
 npm run e2e                                      # 6 ponta a ponta (Playwright)
 ```
 
 **100 testes** no total. Os de integração sobem **PostgreSQL e RabbitMQ reais** (Testcontainers) e
 cobrem os cenários críticos: saldo insuficiente, evento duplicado e débitos concorrentes. Os testes
+do frontend rodam no Chrome (headless) via Karma — é preciso ter o Chrome instalado. Os testes
 ponta a ponta percorrem login → contas → extrato com filtros → aba de informações → lançamento com
-sucesso → rejeição por saldo insuficiente. Os testes e2e precisam da aplicação no ar
-(`docker compose up`).
+sucesso → rejeição por saldo insuficiente e precisam da aplicação no ar (`docker compose up`).
 
 ---
 
@@ -178,8 +178,9 @@ sucesso → rejeição por saldo insuficiente. Os testes e2e precisam da aplica�
   testes.
 - **Moeda como Value Object:** `Money` é imutável, nunca negativo e sempre com 2 casas (arredondamento
   bancário), evitando erros de arredondamento.
-- **Testes de frontend em Vitest:** o Angular 22 usa Vitest como runner padrão (o Karma foi
-  depreciado). O enunciado cita Jasmine/Karma ou Jest; mantivemos o padrão do Angular.
+- **Testes de frontend em Jasmine/Karma:** o enunciado pede Jasmine/Karma ou Jest. O Angular 22 traz o
+  Vitest como padrão, mas o builder ainda suporta o runner do Karma — então usamos
+  `runner: "karma"` com Chrome headless, exatamente como o enunciado descreve.
 - **Referências curtas:** os identificadores aparecem como `#57F1B664`, legíveis para quem usa a tela;
   o valor completo fica no `title` (hover), para suporte.
 - **Segredos:** as credenciais do Compose servem apenas para desenvolvimento local. Em produção seriam

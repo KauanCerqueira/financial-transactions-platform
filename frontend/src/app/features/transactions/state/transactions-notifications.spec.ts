@@ -27,15 +27,15 @@ const processed: TransactionAccepted = {
 describe('TransactionsNotifications', () => {
   let actions$: ReplaySubject<unknown>;
   let notifications: TransactionsNotifications;
-  let toast: {
-    showSuccess: ReturnType<typeof vi.fn>;
-    showInfo: ReturnType<typeof vi.fn>;
-    showError: ReturnType<typeof vi.fn>;
-  };
+  let toast: { showSuccess: jasmine.Spy; showInfo: jasmine.Spy; showError: jasmine.Spy };
 
   beforeEach(() => {
     actions$ = new ReplaySubject(1);
-    toast = { showSuccess: vi.fn(), showInfo: vi.fn(), showError: vi.fn() };
+    toast = {
+      showSuccess: jasmine.createSpy('showSuccess'),
+      showInfo: jasmine.createSpy('showInfo'),
+      showError: jasmine.createSpy('showError'),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -58,7 +58,7 @@ describe('TransactionsNotifications', () => {
   it('shows the success toast for a new transaction', () => {
     dispatch(TransactionsActions.transactionResolved({ result: processed }));
 
-    expect(toast.showSuccess).toHaveBeenCalledWith('Transação enviada com sucesso!', 'Ver extrato', expect.any(Function));
+    expect(toast.showSuccess).toHaveBeenCalledWith('Transação enviada com sucesso!', 'Ver extrato', jasmine.any(Function));
     expect(toast.showInfo).not.toHaveBeenCalled();
   });
 
@@ -68,7 +68,7 @@ describe('TransactionsNotifications', () => {
     expect(toast.showInfo).toHaveBeenCalledWith(
       'Evento já processado — o saldo não mudou.',
       'Ver extrato',
-      expect.any(Function),
+      jasmine.any(Function),
     );
     expect(toast.showSuccess).not.toHaveBeenCalled();
   });

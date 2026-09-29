@@ -13,7 +13,7 @@ describe('accountsReducer', () => {
   it('starts idle and empty', () => {
     const state = accountsReducer(undefined, { type: 'unknown' });
 
-    expect(state).toEqual<AccountsState>({ accounts: [], summary: null, status: 'idle', error: null });
+    expect(state).toEqual({ accounts: [], summary: null, status: 'idle', error: null } satisfies AccountsState);
   });
 
   it('sets loading when asked to load', () => {
