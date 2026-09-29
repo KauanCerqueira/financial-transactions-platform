@@ -32,28 +32,65 @@ public sealed class TransactionQueueConsumer(
             return;
         }
 
-        var factory = new ConnectionFactory { Uri = new Uri(options.Uri) };
+        var factory = new ConnectionFactory
+        {
+            Uri = new Uri(options.Uri),
+            AutomaticRecoveryEnabled = true,
+            NetworkRecoveryInterval = TimeSpan.FromSeconds(5)
+        };
 
-        await using var connection = await factory.CreateConnectionAsync(stoppingToken);
-        await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+        // O broker pode demorar a aceitar conexões logo após subir (o healthcheck do
+        // container fica "healthy" antes de o listener AMQP ficar pronto). Tentamos de
+        // novo até conectar, em vez de derrubar o worker na primeira falha.
+        var connection = await ConnectWithRetryAsync(factory, stoppingToken);
 
-        await channel.QueueDeclareAsync(
-            options.QueueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null,
-            cancellationToken: stoppingToken);
-        await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false, cancellationToken: stoppingToken);
+        await using (connection)
+        {
+            var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+            await using (channel)
+            {
+                await channel.QueueDeclareAsync(
+                    options.QueueName,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null,
+                    cancellationToken: stoppingToken);
+                await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false, cancellationToken: stoppingToken);
 
-        var consumer = new AsyncEventingBasicConsumer(channel);
-        consumer.ReceivedAsync += (_, args) => HandleAsync(channel, args, stoppingToken);
+                var consumer = new AsyncEventingBasicConsumer(channel);
+                consumer.ReceivedAsync += (_, args) => HandleAsync(channel, args, stoppingToken);
 
-        await channel.BasicConsumeAsync(options.QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+                await channel.BasicConsumeAsync(options.QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
 
-        logger.LogInformation("Consumindo a fila {QueueName}.", options.QueueName);
+                logger.LogInformation("Consumindo a fila {QueueName}.", options.QueueName);
 
-        await Task.Delay(Timeout.Infinite, stoppingToken);
+                await Task.Delay(Timeout.Infinite, stoppingToken);
+            }
+        }
+    }
+
+    private async Task<IConnection> ConnectWithRetryAsync(ConnectionFactory factory, CancellationToken stoppingToken)
+    {
+        var delay = TimeSpan.FromSeconds(2);
+
+        while (true)
+        {
+            try
+            {
+                return await factory.CreateConnectionAsync(stoppingToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(
+                    exception,
+                    "RabbitMQ indisponível; nova tentativa em {DelaySeconds}s.",
+                    delay.TotalSeconds);
+
+                await Task.Delay(delay, stoppingToken);
+                delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, 30));
+            }
+        }
     }
 
     private async Task HandleAsync(IChannel channel, BasicDeliverEventArgs args, CancellationToken cancellationToken)
