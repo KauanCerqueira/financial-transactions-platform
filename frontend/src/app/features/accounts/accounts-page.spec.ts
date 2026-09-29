@@ -17,7 +17,12 @@ describe('AccountsPage', () => {
         provideRouter([]),
         provideMockStore({
           initialState: {
-            accounts: { accounts: status === 'loaded' ? accounts : [], status, error },
+            accounts: {
+              accounts: status === 'loaded' ? accounts : [],
+              summary: status === 'loaded' ? { accounts: 1, totalBalance: 1774.2, transactions: 3 } : null,
+              status,
+              error,
+            },
           },
         }),
       ],
@@ -36,6 +41,8 @@ describe('AccountsPage', () => {
     expect(element.querySelectorAll('.table tbody tr').length).toBe(1);
     expect(element.textContent).toContain('Ana Souza');
     expect(element.textContent).toContain('1.774,20');
+    expect(element.textContent).toContain('Total de Transações');
+    expect(fixture.componentInstance.summary()?.transactions).toBe(3);
   });
 
   it('shows the error state with a retry action', () => {

@@ -10,6 +10,7 @@ import {
   selectAccountsError,
   selectAccountsLoading,
   selectAccountsStatus,
+  selectAccountsSummary,
   selectTotalBalance,
 } from './state/accounts.selectors';
 
@@ -26,6 +27,7 @@ export class AccountsPage implements OnInit {
   readonly error = this.store.selectSignal(selectAccountsError);
   readonly loading = this.store.selectSignal(selectAccountsLoading);
   readonly totalBalance = this.store.selectSignal(selectTotalBalance);
+  readonly summary = this.store.selectSignal(selectAccountsSummary);
   readonly searchText = input('');
   readonly selectedAccountId = input('');
   readonly hasTransactionPanel = input(false);

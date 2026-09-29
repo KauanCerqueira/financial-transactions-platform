@@ -58,6 +58,14 @@
               <app-icon name="refresh" />
             </button>
           </div>
+          <div class="summary__item">
+            <span class="summary__icon"><app-icon name="history" /></span>
+            <div>
+              <span class="summary__label">Total de Transações</span
+              ><span class="summary__value">{{ summary()?.transactions ?? 0 }}</span
+              ><span class="summary__hint">Lançamentos registrados no sistema</span>
+            </div>
+          </div>
         </div>
         <div class="card table-scroll" tabindex="0" role="region" aria-label="Contas cadastradas">
           <table class="table accounts-table">

@@ -5,6 +5,8 @@ export const selectAccountsState = createFeatureSelector<AccountsState>(accounts
 
 export const selectAccounts = createSelector(selectAccountsState, (state) => state.accounts);
 
+export const selectAccountsSummary = createSelector(selectAccountsState, (state) => state.summary);
+
 export const selectAccountsStatus = createSelector(selectAccountsState, (state) => state.status);
 
 export const selectAccountsError = createSelector(selectAccountsState, (state) => state.error);

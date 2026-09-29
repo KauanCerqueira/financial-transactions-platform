@@ -14,6 +14,9 @@ public sealed class TransactionRepository(AppDbContext dbContext) : ITransaction
             .AsNoTracking()
             .FirstOrDefaultAsync(transaction => transaction.EventId == eventId, cancellationToken);
 
+    public Task<int> CountAsync(CancellationToken cancellationToken = default) =>
+        dbContext.Transactions.CountAsync(cancellationToken);
+
     public async Task<IReadOnlyList<Transaction>> GetPageAsync(
         Guid accountId,
         StatementFilter filter,

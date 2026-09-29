@@ -12,6 +12,7 @@ namespace FinancialTransactions.Api.Controllers;
 [Route("api/accounts")]
 public sealed class AccountsController(
     IGetAccountsUseCase getAccounts,
+    IGetAccountsSummaryUseCase getAccountsSummary,
     IGetStatementUseCase getStatement) : ControllerBase
 {
     [HttpGet]
@@ -19,6 +20,14 @@ public sealed class AccountsController(
     [SwaggerResponse(StatusCodes.Status200OK, "Contas retornadas com sucesso.", typeof(IReadOnlyList<AccountDto>))]
     public async Task<ActionResult<IReadOnlyList<AccountDto>>> GetAll(CancellationToken cancellationToken) =>
         Ok(await getAccounts.GetAllAsync(cancellationToken));
+
+    [HttpGet("summary")]
+    [SwaggerOperation(
+        Summary = "Resumo das contas",
+        Description = "Quantidade de contas, saldo consolidado e total de lançamentos registrados.")]
+    [SwaggerResponse(StatusCodes.Status200OK, "Resumo retornado com sucesso.", typeof(AccountsSummaryDto))]
+    public async Task<ActionResult<AccountsSummaryDto>> GetSummary(CancellationToken cancellationToken) =>
+        Ok(await getAccountsSummary.ExecuteAsync(cancellationToken));
 
     [HttpGet("{accountId:guid}/transactions")]
     [SwaggerOperation(

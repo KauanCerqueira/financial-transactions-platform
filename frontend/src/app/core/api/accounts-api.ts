@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Account } from '../models/account';
+import { AccountsSummary } from '../models/accounts-summary';
 import { PagedResult } from '../models/paged-result';
 import { StatementFilters } from '../models/statement-filters';
 import { Transaction } from '../models/transaction';
@@ -12,6 +13,10 @@ export class AccountsApi {
 
   getAll(): Observable<Account[]> {
     return this.http.get<Account[]>('/api/accounts');
+  }
+
+  getSummary(): Observable<AccountsSummary> {
+    return this.http.get<AccountsSummary>('/api/accounts/summary');
   }
 
   getStatement(
