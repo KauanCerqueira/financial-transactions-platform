@@ -56,6 +56,11 @@ public sealed class TransactionsApiTests
         first.StatusCode.Should().Be(HttpStatusCode.Accepted);
         second.StatusCode.Should().BeOneOf(HttpStatusCode.Accepted, HttpStatusCode.OK);
 
+        var firstBody = await ReadAsync<TransactionAcceptedResponse>(first);
+        var secondBody = await ReadAsync<TransactionAcceptedResponse>(second);
+        firstBody!.AlreadyProcessed.Should().BeFalse();
+        secondBody!.AlreadyProcessed.Should().BeTrue();
+
         var completed = await WaitForCompletionAsync(eventId);
         completed.Status.Should().Be(TransactionEventStatus.Processed);
 

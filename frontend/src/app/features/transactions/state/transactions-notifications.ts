@@ -34,10 +34,14 @@ export class TransactionsNotifications {
   private notify(result: TransactionAccepted): void {
     if (result.status === 'PROCESSED' && result.transaction) {
       const accountId = result.transaction.accountId;
+      const openStatement = () => void this.router.navigate(['/accounts', accountId, 'statement']);
 
-      this.toast.showSuccess('Transação enviada com sucesso!', 'Ver extrato', () =>
-        void this.router.navigate(['/accounts', accountId, 'statement']),
-      );
+      if (result.alreadyProcessed) {
+        this.toast.showInfo('Evento já processado — o saldo não mudou.', 'Ver extrato', openStatement);
+        return;
+      }
+
+      this.toast.showSuccess('Transação enviada com sucesso!', 'Ver extrato', openStatement);
 
       return;
     }

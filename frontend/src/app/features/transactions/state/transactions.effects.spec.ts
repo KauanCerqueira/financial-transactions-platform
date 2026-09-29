@@ -16,7 +16,13 @@ const command: ProcessTransactionCommand = {
   occurredAt: '2026-01-30T10:00:00Z',
 };
 
-const pending: TransactionAccepted = { eventId: 'e1', status: 'PENDING', rejectionCode: null, transaction: null };
+const pending: TransactionAccepted = {
+  eventId: 'e1',
+  status: 'PENDING',
+  rejectionCode: null,
+  transaction: null,
+  alreadyProcessed: false,
+};
 
 describe('TransactionsEffects', () => {
   let actions$: Observable<unknown>;

@@ -51,6 +51,7 @@ public sealed class EnqueueTransactionUseCaseTests
         var result = await _useCase.EnqueueAsync(command);
 
         result.Status.Should().Be(TransactionEventStatus.Pending);
+        result.AlreadyProcessed.Should().BeFalse();
         _transactionEvents.Verify(
             repository => repository.AddAsync(It.IsAny<TransactionEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -72,6 +73,7 @@ public sealed class EnqueueTransactionUseCaseTests
         var result = await _useCase.EnqueueAsync(command);
 
         result.Status.Should().Be(TransactionEventStatus.Processed);
+        result.AlreadyProcessed.Should().BeTrue();
         result.Transaction!.Id.Should().Be(processed.Id);
         _queue.Verify(queue => queue.PublishAsync(It.IsAny<ProcessTransactionCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -94,6 +96,7 @@ public sealed class EnqueueTransactionUseCaseTests
         var result = await _useCase.EnqueueAsync(command);
 
         result.Status.Should().Be(TransactionEventStatus.Rejected);
+        result.AlreadyProcessed.Should().BeTrue();
         _queue.Verify(queue => queue.PublishAsync(It.IsAny<ProcessTransactionCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

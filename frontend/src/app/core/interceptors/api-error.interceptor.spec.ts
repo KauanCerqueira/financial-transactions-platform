@@ -2,16 +2,25 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { OidcSecurityService } from 'angular-auth-oidc-client';
 import { ApiError } from '../models/api-error';
 import { apiErrorInterceptor } from './api-error.interceptor';
 
 describe('apiErrorInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
+  const oidc = { logoffLocal: vi.fn(), authorize: vi.fn() };
 
   beforeEach(() => {
+    oidc.logoffLocal.mockClear();
+    oidc.authorize.mockClear();
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(withInterceptors([apiErrorInterceptor])), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(withInterceptors([apiErrorInterceptor])),
+        provideHttpClientTesting(),
+        { provide: OidcSecurityService, useValue: oidc },
+      ],
     });
 
     http = TestBed.inject(HttpClient);
@@ -79,5 +88,17 @@ describe('apiErrorInterceptor', () => {
 
     expect(error.code).toBe('HTTP_400');
     expect(error.message).toBe('Payload inválido.');
+  });
+
+  it('clears the session and starts the login flow on 401', async () => {
+    const result = failingRequest();
+    httpMock.expectOne('/api/accounts').flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    const error = await result;
+
+    expect(error.code).toBe('HTTP_401');
+    expect(error.message).toContain('sessão expirou');
+    expect(oidc.logoffLocal).toHaveBeenCalled();
+    expect(oidc.authorize).toHaveBeenCalled();
   });
 });

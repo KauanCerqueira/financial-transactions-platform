@@ -7,4 +7,5 @@ public sealed record TransactionAcceptedResponse(
     Guid EventId,
     TransactionEventStatus Status,
     string? RejectionCode,
-    TransactionDto? Transaction);
+    TransactionDto? Transaction,
+    bool AlreadyProcessed);

@@ -11,8 +11,11 @@
 
   @if (status() === 'success' && result(); as outcome) {
     @if (outcome.transaction; as transaction) {
-      <div class="result" role="status">
-        <p class="result__title"><app-icon name="check" />Lançamento registrado</p>
+      <div class="result" [class.result--replay]="outcome.alreadyProcessed" role="status">
+        <p class="result__title">
+          <app-icon [name]="outcome.alreadyProcessed ? 'history' : 'check'" />
+          {{ outcome.alreadyProcessed ? 'Evento já processado' : 'Lançamento registrado' }}
+        </p>
 
         <div class="result__row">
           <span class="result__label">Conta</span>

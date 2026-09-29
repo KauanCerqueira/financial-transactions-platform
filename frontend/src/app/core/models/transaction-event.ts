@@ -7,4 +7,5 @@ export interface TransactionAccepted {
   status: TransactionEventStatus;
   rejectionCode: string | null;
   transaction: Transaction | null;
+  alreadyProcessed: boolean;
 }

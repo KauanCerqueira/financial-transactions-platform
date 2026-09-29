@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-const SuccessDurationMs = 6000;
+const NoticeDurationMs = 6000;
 const ErrorDurationMs = 9000;
 
 @Injectable({ providedIn: 'root' })
@@ -9,23 +9,27 @@ export class Toast {
   private readonly snackBar = inject(MatSnackBar);
 
   showSuccess(message: string, actionLabel: string, action: () => void): void {
-    this.snackBar
-      .open(message, actionLabel, {
-        duration: SuccessDurationMs,
-        panelClass: ['toast', 'toast--success'],
-        horizontalPosition: 'right',
-        verticalPosition: 'bottom',
-      })
-      .onAction()
-      .subscribe(() => action());
+    this.open(message, 'toast--success', NoticeDurationMs, actionLabel, action);
+  }
+
+  showInfo(message: string, actionLabel: string, action: () => void): void {
+    this.open(message, 'toast--info', NoticeDurationMs, actionLabel, action);
   }
 
   showError(message: string): void {
-    this.snackBar.open(message, 'Fechar', {
-      duration: ErrorDurationMs,
-      panelClass: ['toast', 'toast--error'],
+    this.open(message, 'toast--error', ErrorDurationMs, 'Fechar');
+  }
+
+  private open(message: string, modifier: string, duration: number, actionLabel: string, action?: () => void): void {
+    const reference = this.snackBar.open(message, actionLabel, {
+      duration,
+      panelClass: ['toast', modifier],
       horizontalPosition: 'right',
       verticalPosition: 'bottom',
     });
+
+    if (action) {
+      reference.onAction().subscribe(() => action());
+    }
   }
 }

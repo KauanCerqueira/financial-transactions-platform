@@ -52,7 +52,12 @@ public sealed class TransactionsController(
             request.OccurredAt);
 
         var result = await enqueueTransaction.EnqueueAsync(command, cancellationToken);
-        var response = new TransactionAcceptedResponse(result.EventId, result.Status, result.RejectionCode, result.Transaction);
+        var response = new TransactionAcceptedResponse(
+            result.EventId,
+            result.Status,
+            result.RejectionCode,
+            result.Transaction,
+            result.AlreadyProcessed);
 
         return result.Status == TransactionEventStatus.Pending
             ? Accepted($"/api/transactions/{result.EventId}", response)
@@ -76,6 +81,11 @@ public sealed class TransactionsController(
             return NotFound();
         }
 
-        return Ok(new TransactionAcceptedResponse(result.EventId, result.Status, result.RejectionCode, result.Transaction));
+        return Ok(new TransactionAcceptedResponse(
+            result.EventId,
+            result.Status,
+            result.RejectionCode,
+            result.Transaction,
+            result.AlreadyProcessed));
     }
 }

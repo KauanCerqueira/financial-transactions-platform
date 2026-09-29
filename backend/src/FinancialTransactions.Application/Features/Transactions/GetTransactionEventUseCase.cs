@@ -25,7 +25,8 @@ public sealed class GetTransactionEventUseCase(
             eventId,
             transactionEvent.Status,
             transactionEvent.RejectionCode,
-            transaction);
+            transaction,
+            AlreadyProcessed: false);
     }
 
     private async Task<TransactionDto?> GetProcessedTransactionAsync(Guid eventId, CancellationToken cancellationToken)

@@ -27,7 +27,8 @@ public sealed class EnqueueTransactionUseCase(
                 command.EventId,
                 TransactionEventStatus.Processed,
                 null,
-                TransactionDto.From(processed));
+                TransactionDto.From(processed),
+                AlreadyProcessed: true);
         }
 
         var existingEvent = await transactionEvents.GetByEventIdAsync(command.EventId, cancellationToken);
@@ -66,7 +67,7 @@ public sealed class EnqueueTransactionUseCase(
 
         await queue.PublishAsync(command, cancellationToken);
 
-        return new EnqueuedTransaction(command.EventId, TransactionEventStatus.Pending, null, null);
+        return new EnqueuedTransaction(command.EventId, TransactionEventStatus.Pending, null, null, AlreadyProcessed: false);
     }
 
     private async Task<EnqueuedTransaction> ReturnExistingEventAsync(
@@ -87,6 +88,7 @@ public sealed class EnqueueTransactionUseCase(
             transactionEvent.EventId,
             transactionEvent.Status,
             transactionEvent.RejectionCode,
-            null);
+            null,
+            AlreadyProcessed: true);
     }
 }

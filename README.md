@@ -140,7 +140,7 @@ npm run build
 npm run e2e
 ```
 
-Hoje são **49 testes no backend** (unitários e de integração), **38 no frontend** (Vitest) e **6 ponta a ponta** (Playwright: login, contas, extrato com filtros, aba de informações, lançamento com sucesso e rejeição). Os testes de integração usam Testcontainers e precisam do Docker em execução. Os testes e2e precisam da aplicação no ar (`docker compose up`) e do Chromium do Playwright (`npx playwright install chromium`).
+Hoje são **49 testes no backend** (unitários e de integração), **41 no frontend** (Vitest) e **6 ponta a ponta** (Playwright: login, contas, extrato com filtros, aba de informações, lançamento com sucesso e rejeição). Os testes de integração usam Testcontainers e precisam do Docker em execução. Os testes e2e precisam da aplicação no ar (`docker compose up`) e do Chromium do Playwright (`npx playwright install chromium`).
 
 O frontend pode ser iniciado fora do Compose com `npm start` na pasta `frontend`; a configuração de desenvolvimento encaminha `/api` para `localhost:8080`. A aplicação completa é iniciada com o Compose acima.
 

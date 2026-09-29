@@ -4,7 +4,13 @@ import { transactionsReducer } from './transactions.reducer';
 
 const command = { eventId: 'e1', accountId: 'a1', type: 'CREDIT' as const, amount: 100, occurredAt: '2026-01-30T10:00:00Z' };
 
-const pending: TransactionAccepted = { eventId: 'e1', status: 'PENDING', rejectionCode: null, transaction: null };
+const pending: TransactionAccepted = {
+  eventId: 'e1',
+  status: 'PENDING',
+  rejectionCode: null,
+  transaction: null,
+  alreadyProcessed: false,
+};
 const processed: TransactionAccepted = {
   eventId: 'e1',
   status: 'PROCESSED',
@@ -19,12 +25,14 @@ const processed: TransactionAccepted = {
     balanceAfter: 200,
     recordedAt: '2026-01-30T10:00:00Z',
   },
+  alreadyProcessed: false,
 };
 const rejected: TransactionAccepted = {
   eventId: 'e1',
   status: 'REJECTED',
   rejectionCode: 'INSUFFICIENT_FUNDS',
   transaction: null,
+  alreadyProcessed: true,
 };
 
 describe('transactionsReducer', () => {

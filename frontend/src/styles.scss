@@ -485,6 +485,9 @@ button:disabled {
 .toast--error {
   --mat-snack-bar-container-color: #b00020;
 }
+.toast--info {
+  --mat-snack-bar-container-color: #5a0380;
+}
 .section-head {
   display: flex;
   justify-content: space-between;
