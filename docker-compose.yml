@@ -22,11 +22,27 @@ services:
     environment:
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=financial_transactions;Username=postgres;Password=postgres"
       ASPNETCORE_ENVIRONMENT: Production
+      Observability__ElasticsearchUri: "${ELASTICSEARCH_URI:-}"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
 
+  # Opcional: suba com `docker compose --profile observability up`
+  # e defina ELASTICSEARCH_URI=http://elasticsearch:9200 para indexar os logs.
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    profiles: ["observability"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
 volumes:
   postgres-data:
+  elasticsearch-data:
