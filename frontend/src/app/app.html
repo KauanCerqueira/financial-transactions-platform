@@ -1,11 +1,13 @@
 <div class="shell">
   <aside class="shell__sidebar">
     <a class="brand" routerLink="/accounts">
-      <span class="brand__symbol" aria-hidden="true"></span>
-      <span
-        ><span class="brand__mark">FRAGA</span
-        ><span class="brand__caption">INTELIGÊNCIA AUTOMOTIVA</span></span
-      >
+      <img
+        class="brand__logo"
+        src="/images/fraga-logo-color.png"
+        alt="FRAGA — Inteligência Automotiva"
+        width="172"
+        height="47"
+      />
     </a>
     <nav class="shell__nav" aria-label="Navegação principal">
       <a routerLink="/accounts" routerLinkActive="is-active"><app-icon name="bank" />Contas</a>
@@ -44,3 +46,4 @@
     <main class="shell__content" id="main-content"><router-outlet /></main>
   </div>
 </div>
+

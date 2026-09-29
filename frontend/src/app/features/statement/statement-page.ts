@@ -8,6 +8,7 @@ import { TransactionType } from '../../core/models/transaction';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
 import { DateBrPipe } from '../../shared/pipes/date-br.pipe';
 import { DateTimeBrPipe } from '../../shared/pipes/date-time-br.pipe';
+import { ShortIdPipe } from '../../shared/pipes/short-id.pipe';
 import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from '../accounts/state/accounts.actions';
 import { selectAccounts } from '../accounts/state/accounts.selectors';
@@ -27,7 +28,7 @@ type TypeFilter = TransactionType | 'ALL';
 
 @Component({
   selector: 'app-statement-page',
-  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateBrPipe, DateTimeBrPipe, Icon],
+  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateBrPipe, DateTimeBrPipe, ShortIdPipe, Icon],
   templateUrl: './statement-page.html',
 })
 export class StatementPage implements OnInit {

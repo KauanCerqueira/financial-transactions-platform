@@ -10,7 +10,7 @@
       <span class="summary__icon"><app-icon name="bank" /></span>
       <div class="statement-head__identity">
         <h2>{{ account()?.holderName ?? 'Extrato da conta' }}</h2>
-        <span class="identifier">{{ accountId() }}</span>
+        <span class="identifier" [title]="accountId()">{{ accountId() | shortId }}</span>
       </div>
       @if (account(); as current) {
         <div class="statement-head__balance">
@@ -134,7 +134,7 @@
                       <th scope="col">Tipo</th>
                       <th scope="col" class="table__number">Valor</th>
                       <th scope="col" class="table__number">Saldo Após</th>
-                      <th scope="col">Event ID</th>
+                      <th scope="col">Referência</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -157,7 +157,7 @@
                           {{ item.type === 'CREDIT' ? '+' : '−' }}{{ item.amount | brl }}
                         </td>
                         <td class="table__number">{{ item.balanceAfter | brl }}</td>
-                        <td class="identifier">{{ item.eventId }}</td>
+                        <td class="identifier" [title]="item.eventId">{{ item.eventId | shortId }}</td>
                       </tr>
                     }
                   </tbody>
@@ -193,8 +193,8 @@
             <dd>{{ account()?.holderName ?? '—' }}</dd>
           </div>
           <div class="info-grid__item">
-            <dt>ID da conta</dt>
-            <dd class="identifier">{{ accountId() }}</dd>
+            <dt>Referência</dt>
+            <dd class="identifier" [title]="accountId()">{{ accountId() | shortId }}</dd>
           </div>
           <div class="info-grid__item">
             <dt>Saldo atual</dt>

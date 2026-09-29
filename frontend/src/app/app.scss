@@ -25,27 +25,11 @@
   text-decoration: none;
   color: #0b111b;
 }
-.brand__mark {
+.brand__logo {
   display: block;
-  font-size: 30px;
-  font-weight: 700;
-  font-style: italic;
-  line-height: 1;
-  letter-spacing: 0.035em;
-}
-.brand__caption {
-  display: block;
-  font-size: 6px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  margin-top: 4px;
-}
-.brand__symbol {
-  width: 22px;
-  height: 32px;
-  flex-shrink: 0;
-  transform: skew(-29deg);
-  background: linear-gradient(to bottom, #ed0015 0 45%, transparent 45% 53%, #ed0015 53% 100%);
+  width: 100%;
+  max-width: 172px;
+  height: auto;
 }
 .shell__nav {
   position: relative;
@@ -199,12 +183,6 @@
   }
   .brand {
     padding: 0 18px;
-  }
-  .brand__mark {
-    font-size: 26px;
-  }
-  .brand__caption {
-    font-size: 5px;
   }
   .shell__content {
     padding: 22px;

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
 import { Store } from '@ngrx/store';
 import { CurrencyBrlPipe } from '../../shared/pipes/currency-brl.pipe';
+import { ShortIdPipe } from '../../shared/pipes/short-id.pipe';
 import { Icon } from '../../shared/ui/icon/icon';
 import * as AccountsActions from './state/accounts.actions';
 import {
@@ -16,7 +17,7 @@ import {
 
 @Component({
   selector: 'app-accounts-page',
-  imports: [RouterLink, MatButton, CurrencyBrlPipe, Icon],
+  imports: [RouterLink, MatButton, CurrencyBrlPipe, ShortIdPipe, Icon],
   templateUrl: './accounts-page.html',
 })
 export class AccountsPage implements OnInit {

@@ -72,7 +72,7 @@
             <thead>
               <tr>
                 <th scope="col">Titular da Conta</th>
-                <th scope="col">ID da Conta</th>
+                <th scope="col">Referência</th>
                 <th scope="col" class="table__number">Saldo Atual</th>
                 <th scope="col" class="table__action">Ações</th>
               </tr>
@@ -84,7 +84,7 @@
                     <strong>{{ account.holderName }}</strong
                     ><span class="table__secondary">Conta financeira</span>
                   </td>
-                  <td class="identifier">{{ account.id }}</td>
+                  <td class="identifier" [title]="account.id">{{ account.id | shortId }}</td>
                   <td class="table__number amount amount--credit">{{ account.balance | brl }}</td>
                   <td class="table__action">
                     <a

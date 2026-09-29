@@ -27,6 +27,10 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.brand__mark')?.textContent).toContain('FRAGA');
+    expect(compiled.querySelector('.brand__logo')?.getAttribute('src')).toBe(
+      '/images/fraga-logo-color.png',
+    );
+    expect(compiled.querySelector('.brand__logo')?.getAttribute('alt')).toContain('FRAGA');
   });
 });
+

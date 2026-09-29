@@ -25,7 +25,7 @@ test('mostra a aba de informações com dados reais da conta', async ({ page }) 
 
   const info = page.locator('.info-grid');
   await expect(info.getByText('Titular')).toBeVisible();
-  await expect(info.getByText('ID da conta')).toBeVisible();
-  await expect(info.getByText(seededAccountId)).toBeVisible();
+  await expect(info.getByText('Referência')).toBeVisible();
+  await expect(info.getByText('#11111111')).toBeVisible();
   await expect(info.getByText('Criada em')).toBeVisible();
 });
