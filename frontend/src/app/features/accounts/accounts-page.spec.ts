@@ -74,7 +74,7 @@ describe('AccountsPage', () => {
     fixture.componentRef.setInput('searchText', 'inexistente');
     fixture.detectChanges();
     expect(fixture.componentInstance.filteredAccounts()).toEqual([]);
-    expect(fixture.componentInstance.totalBalance()).toBe(1774.2);
+    expect(fixture.componentInstance.summary()?.totalBalance).toBe(1774.2);
     expect(fixture.nativeElement.textContent).toContain('Nenhuma conta encontrada');
   });
 });

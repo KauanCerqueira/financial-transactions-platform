@@ -12,7 +12,6 @@ import {
   selectAccountsLoading,
   selectAccountsStatus,
   selectAccountsSummary,
-  selectTotalBalance,
 } from './state/accounts.selectors';
 
 @Component({
@@ -27,7 +26,6 @@ export class AccountsPage implements OnInit {
   readonly status = this.store.selectSignal(selectAccountsStatus);
   readonly error = this.store.selectSignal(selectAccountsError);
   readonly loading = this.store.selectSignal(selectAccountsLoading);
-  readonly totalBalance = this.store.selectSignal(selectTotalBalance);
   readonly summary = this.store.selectSignal(selectAccountsSummary);
   readonly searchText = input('');
   readonly selectedAccountId = input('');

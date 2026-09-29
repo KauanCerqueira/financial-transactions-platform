@@ -11,10 +11,6 @@ export const selectStatementPageSize = createSelector(selectStatementState, (sta
 
 export const selectStatementTotalItems = createSelector(selectStatementState, (state) => state.totalItems);
 
-export const selectStatementFilters = createSelector(selectStatementState, (state) => state.filters);
-
 export const selectStatementStatus = createSelector(selectStatementState, (state) => state.status);
 
 export const selectStatementError = createSelector(selectStatementState, (state) => state.error);
-
-export const selectStatementLoading = createSelector(selectStatementStatus, (status) => status === 'loading');

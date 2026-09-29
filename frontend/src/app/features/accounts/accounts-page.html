@@ -38,7 +38,7 @@
             <span class="summary__icon"><app-icon name="bank" /></span>
             <div>
               <span class="summary__label">Total em Contas</span
-              ><span class="summary__value">{{ totalBalance() | brl }}</span
+              ><span class="summary__value">{{ (summary()?.totalBalance ?? 0) | brl }}</span
               ><span class="summary__hint">Saldo consolidado de todas as contas</span>
             </div>
           </div>

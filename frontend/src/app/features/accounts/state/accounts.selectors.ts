@@ -12,7 +12,3 @@ export const selectAccountsStatus = createSelector(selectAccountsState, (state) 
 export const selectAccountsError = createSelector(selectAccountsState, (state) => state.error);
 
 export const selectAccountsLoading = createSelector(selectAccountsStatus, (status) => status === 'loading');
-
-export const selectTotalBalance = createSelector(selectAccounts, (accounts) =>
-  accounts.reduce((total, account) => total + account.balance, 0),
-);
