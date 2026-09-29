@@ -6,8 +6,6 @@ public interface ITransactionRepository
 {
     Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default);
 
-    Task<bool> ExistsByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
-
     Task<Transaction?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Transaction>> GetPageAsync(

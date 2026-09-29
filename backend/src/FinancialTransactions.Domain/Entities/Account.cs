@@ -60,6 +60,11 @@ public sealed class Account
             throw new DomainException("O valor do evento deve ser maior que zero.");
         }
 
+        if (occurredAt == default)
+        {
+            throw new DomainException("A data do evento é obrigatória.");
+        }
+
         Balance = type switch
         {
             TransactionType.Credit => Balance.Add(amount),

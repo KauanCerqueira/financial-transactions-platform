@@ -25,7 +25,4 @@ public sealed class AccountRepository(AppDbContext dbContext) : IAccountReposito
 
         return lockedAccounts.FirstOrDefault();
     }
-
-    public async Task AddAsync(Account account, CancellationToken cancellationToken = default) =>
-        await dbContext.Accounts.AddAsync(account, cancellationToken);
 }

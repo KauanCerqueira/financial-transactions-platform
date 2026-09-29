@@ -9,9 +9,6 @@ public sealed class TransactionRepository(AppDbContext dbContext) : ITransaction
     public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default) =>
         await dbContext.Transactions.AddAsync(transaction, cancellationToken);
 
-    public Task<bool> ExistsByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default) =>
-        dbContext.Transactions.AnyAsync(transaction => transaction.EventId == eventId, cancellationToken);
-
     public Task<Transaction?> GetByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default) =>
         dbContext.Transactions
             .AsNoTracking()

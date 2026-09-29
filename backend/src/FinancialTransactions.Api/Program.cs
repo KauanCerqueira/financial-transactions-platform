@@ -1,9 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FinancialTransactions.Api.Errors;
 using FinancialTransactions.Api.Startup;
 using FinancialTransactions.Application;
 using FinancialTransactions.Infrastructure;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 

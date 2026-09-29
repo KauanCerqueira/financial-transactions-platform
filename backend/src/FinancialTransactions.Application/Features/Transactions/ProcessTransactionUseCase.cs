@@ -31,6 +31,7 @@ public sealed class ProcessTransactionUseCase(
         }
         catch (DuplicateEventException)
         {
+            // Corrida: outro request gravou o mesmo eventId entre o pré-check e o commit.
             var concurrentTransaction = await transactions.GetByEventIdAsync(command.EventId, cancellationToken);
 
             if (concurrentTransaction is null)

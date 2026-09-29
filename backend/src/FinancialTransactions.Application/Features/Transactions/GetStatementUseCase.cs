@@ -1,9 +1,12 @@
 using FinancialTransactions.Application.Abstractions.Persistence;
 using FinancialTransactions.Application.Dtos;
+using FinancialTransactions.Application.Exceptions;
 
 namespace FinancialTransactions.Application.Features.Transactions;
 
-public sealed class GetStatementUseCase(ITransactionRepository transactions) : IGetStatementUseCase
+public sealed class GetStatementUseCase(
+    IAccountRepository accounts,
+    ITransactionRepository transactions) : IGetStatementUseCase
 {
     private const int MaxPageSize = 100;
 
@@ -11,6 +14,8 @@ public sealed class GetStatementUseCase(ITransactionRepository transactions) : I
         GetStatementQuery query,
         CancellationToken cancellationToken = default)
     {
+        await EnsureAccountExistsAsync(query.AccountId, cancellationToken);
+
         var page = Math.Max(query.Page, 1);
         var pageSize = Math.Clamp(query.PageSize, 1, MaxPageSize);
         var skip = (page - 1) * pageSize;
@@ -23,5 +28,15 @@ public sealed class GetStatementUseCase(ITransactionRepository transactions) : I
             page,
             pageSize,
             totalItems);
+    }
+
+    private async Task EnsureAccountExistsAsync(Guid accountId, CancellationToken cancellationToken)
+    {
+        var account = await accounts.GetByIdAsync(accountId, cancellationToken);
+
+        if (account is null)
+        {
+            throw new AccountNotFoundException(accountId);
+        }
     }
 }

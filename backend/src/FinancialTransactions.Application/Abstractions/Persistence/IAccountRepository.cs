@@ -9,6 +9,4 @@ public interface IAccountRepository
     Task<Account?> GetByIdAsync(Guid accountId, CancellationToken cancellationToken = default);
 
     Task<Account?> GetByIdWithLockAsync(Guid accountId, CancellationToken cancellationToken = default);
-
-    Task AddAsync(Account account, CancellationToken cancellationToken = default);
 }

@@ -39,10 +39,6 @@ public sealed class Money : IEquatable<Money>, IComparable<Money>
         return Create(result);
     }
 
-    public static Money operator +(Money left, Money right) => left.Add(right);
-
-    public static Money operator -(Money left, Money right) => left.Subtract(right);
-
     public static bool operator >(Money left, Money right) => left.Amount > right.Amount;
 
     public static bool operator <(Money left, Money right) => left.Amount < right.Amount;

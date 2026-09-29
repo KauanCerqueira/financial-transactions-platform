@@ -1,5 +1,4 @@
 using FinancialTransactions.Domain.Enums;
-using FinancialTransactions.Domain.Exceptions;
 using FinancialTransactions.Domain.ValueObjects;
 
 namespace FinancialTransactions.Domain.Entities;
@@ -36,16 +35,6 @@ public sealed class Transaction
         Money balanceAfter,
         DateTimeOffset recordedAt)
     {
-        if (eventId == Guid.Empty)
-        {
-            throw new DomainException("O eventId do lançamento é obrigatório.");
-        }
-
-        if (amount.IsZero)
-        {
-            throw new DomainException("O valor do lançamento deve ser maior que zero.");
-        }
-
         Id = id;
         EventId = eventId;
         AccountId = accountId;
