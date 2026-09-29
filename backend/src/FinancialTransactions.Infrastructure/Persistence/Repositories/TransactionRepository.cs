@@ -6,6 +6,9 @@ namespace FinancialTransactions.Infrastructure.Persistence.Repositories;
 
 public sealed class TransactionRepository(AppDbContext dbContext) : ITransactionRepository
 {
+    public async Task AddAsync(Transaction transaction, CancellationToken cancellationToken = default) =>
+        await dbContext.Transactions.AddAsync(transaction, cancellationToken);
+
     public Task<bool> ExistsByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default) =>
         dbContext.Transactions.AnyAsync(transaction => transaction.EventId == eventId, cancellationToken);
 

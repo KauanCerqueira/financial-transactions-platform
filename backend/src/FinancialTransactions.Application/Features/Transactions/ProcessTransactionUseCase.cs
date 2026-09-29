@@ -59,6 +59,8 @@ public sealed class ProcessTransactionUseCase(
                 command.OccurredAt,
                 timeProvider.GetUtcNow());
 
+            await transactions.AddAsync(transaction, token);
+
             await unitOfWork.SaveChangesAsync(token);
 
             return new ProcessTransactionResult(TransactionDto.From(transaction), AlreadyProcessed: false);
