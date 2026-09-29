@@ -33,3 +33,5 @@ app.MapControllers();
 await app.ApplyMigrationsAndSeedAsync();
 
 app.Run();
+
+public partial class Program;
