@@ -62,8 +62,9 @@ Para encerrar: `docker compose down`. Para apagar os dados de demonstração: `d
 
 - **Lista de contas** com saldo consolidado e um resumo (total em contas, contas cadastradas e total de
   lançamentos).
-- **Extrato da conta** em tela própria, paginado, com **filtros por tipo e período** e uma coluna que
-  mostra o **saldo após cada lançamento**.
+- **Extrato da conta** em tela própria, paginado, com **filtros por tipo e período**, o **total de
+  créditos e débitos do período** e uma coluna que mostra o **saldo após cada lançamento**. No próprio
+  cabeçalho dá para **trocar de conta** sem voltar para a lista.
 - **Lançamento de crédito ou débito** com validação de campos e feedback claro de **processamento,
   sucesso, duplicidade e saldo insuficiente** (painel na tela e aviso no canto).
 - **Estados de interface**: carregamento (esqueleto), erro com "tentar de novo", lista vazia e sessão
@@ -122,7 +123,7 @@ POST /api/transactions
 |---|---|
 | `GET /api/accounts` | Contas com saldo consolidado |
 | `GET /api/accounts/summary` | Resumo: contas, saldo total e lançamentos |
-| `GET /api/accounts/{id}/transactions?page=&pageSize=&type=&from=&to=` | Extrato paginado, com filtros |
+| `GET /api/accounts/{id}/transactions?page=&pageSize=&type=&from=&to=` | Extrato paginado com filtros e o resumo de créditos/débitos do período |
 | `POST /api/transactions` | Processa o evento e atualiza o saldo (201 / 200 / 422 / 404) |
 | `POST /api/transactions/async` | Diferencial: enfileira para o worker (202) |
 | `GET /api/transactions/{eventId}` | Status de um evento enfileirado |

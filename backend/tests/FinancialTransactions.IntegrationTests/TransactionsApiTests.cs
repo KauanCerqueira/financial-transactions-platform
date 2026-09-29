@@ -148,13 +148,15 @@ public sealed class TransactionsApiTests
         await PostTransactionAsync(accountId, "CREDIT", 50m, Guid.NewGuid());
         await PostTransactionAsync(accountId, "DEBIT", 30m, Guid.NewGuid());
 
-        var statement = await _fixture.Client.GetFromJsonAsync<PagedResult<TransactionDto>>(
+        var statement = await _fixture.Client.GetFromJsonAsync<StatementDto>(
             $"/api/accounts/{accountId}/transactions?page=1&pageSize=2", ApiJson.Options);
 
-        statement!.TotalItems.Should().Be(3);
-        statement.Items.Should().HaveCount(2);
-        statement.TotalPages.Should().Be(2);
-        statement.Items.Should().OnlyContain(transaction => transaction.BalanceAfter >= 0m);
+        statement!.Page.TotalItems.Should().Be(3);
+        statement.Page.Items.Should().HaveCount(2);
+        statement.Page.TotalPages.Should().Be(2);
+        statement.Page.Items.Should().OnlyContain(transaction => transaction.BalanceAfter >= 0m);
+        statement.Summary.CreditTotal.Should().Be(150m);
+        statement.Summary.DebitTotal.Should().Be(30m);
     }
 
     [Fact]

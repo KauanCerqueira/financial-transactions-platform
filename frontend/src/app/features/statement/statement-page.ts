@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButton } from '@angular/material/button';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { Store } from '@ngrx/store';
 import { StatementFilters } from '../../core/models/statement-filters';
@@ -20,6 +21,7 @@ import {
   selectStatementPage,
   selectStatementPageSize,
   selectStatementStatus,
+  selectStatementSummary,
   selectStatementTotalItems,
 } from './state/statement.selectors';
 
@@ -28,16 +30,29 @@ type TypeFilter = TransactionType | 'ALL';
 
 @Component({
   selector: 'app-statement-page',
-  imports: [RouterLink, MatButton, MatPaginator, CurrencyBrlPipe, DateBrPipe, DateTimeBrPipe, ShortIdPipe, Icon],
+  imports: [
+    RouterLink,
+    MatButton,
+    MatMenu,
+    MatMenuItem,
+    MatMenuTrigger,
+    MatPaginator,
+    CurrencyBrlPipe,
+    DateBrPipe,
+    DateTimeBrPipe,
+    ShortIdPipe,
+    Icon,
+  ],
   templateUrl: './statement-page.html',
 })
 export class StatementPage implements OnInit {
   private readonly store = inject(Store);
+  private readonly router = inject(Router);
 
   readonly accountId = input.required<string>();
   readonly standalone = input(false);
 
-  private readonly accounts = this.store.selectSignal(selectAccounts);
+  readonly accounts = this.store.selectSignal(selectAccounts);
   readonly account = computed(
     () => this.accounts().find((candidate) => candidate.id === this.accountId()) ?? null,
   );
@@ -46,6 +61,7 @@ export class StatementPage implements OnInit {
   readonly page = this.store.selectSignal(selectStatementPage);
   readonly pageSize = this.store.selectSignal(selectStatementPageSize);
   readonly totalItems = this.store.selectSignal(selectStatementTotalItems);
+  readonly summary = this.store.selectSignal(selectStatementSummary);
   readonly status = this.store.selectSignal(selectStatementStatus);
   readonly error = this.store.selectSignal(selectStatementError);
 
@@ -56,12 +72,16 @@ export class StatementPage implements OnInit {
   readonly hasFilters = computed(
     () => this.filterType() !== 'ALL' || this.filterFrom() !== '' || this.filterTo() !== '',
   );
+  readonly periodResult = computed(
+    () => (this.summary()?.creditTotal ?? 0) - (this.summary()?.debitTotal ?? 0),
+  );
 
   private readonly submissionResult = this.store.selectSignal(selectSubmissionResult);
   private readonly recordedTransactionId = computed(() => this.submissionResult()?.transaction?.id);
 
   constructor() {
     effect(() => {
+      this.accountId();
       this.recordedTransactionId();
       this.load(1, this.pageSize());
     });
@@ -69,6 +89,10 @@ export class StatementPage implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(AccountsActions.loadAccounts());
+  }
+
+  selectAccount(accountId: string): void {
+    void this.router.navigate(['/accounts', accountId, 'statement']);
   }
 
   onPage(event: PageEvent): void {

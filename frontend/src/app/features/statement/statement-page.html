@@ -9,9 +9,34 @@
     <header class="statement-head">
       <span class="summary__icon"><app-icon name="bank" /></span>
       <div class="statement-head__identity">
-        <h2>{{ account()?.holderName ?? 'Extrato da conta' }}</h2>
+        <button
+          type="button"
+          class="account-switch"
+          [matMenuTriggerFor]="accountMenu"
+          aria-label="Trocar de conta"
+        >
+          <span class="account-switch__name">{{ account()?.holderName ?? 'Selecione a conta' }}</span>
+          <app-icon name="chevron-down" />
+        </button>
         <span class="identifier" [title]="accountId()">{{ accountId() | shortId }}</span>
       </div>
+
+      <mat-menu #accountMenu="matMenu">
+        @for (candidate of accounts(); track candidate.id) {
+          <button
+            type="button"
+            mat-menu-item
+            [class.is-current]="candidate.id === accountId()"
+            (click)="selectAccount(candidate.id)"
+          >
+            <span class="account-option">
+              <span>{{ candidate.holderName }}</span>
+              <small class="identifier">{{ candidate.id | shortId }}</small>
+            </span>
+          </button>
+        }
+      </mat-menu>
+
       @if (account(); as current) {
         <div class="statement-head__balance">
           <span>Saldo Atual</span><strong class="amount--credit">{{ current.balance | brl }}</strong>
@@ -95,6 +120,28 @@
           }
         </div>
 
+        <div class="statement-summary">
+          <div class="statement-summary__item">
+            <span class="statement-summary__label">Créditos</span>
+            <strong class="amount--credit">+{{ (summary()?.creditTotal ?? 0) | brl }}</strong>
+            <small>{{ summary()?.creditCount ?? 0 }} lançamentos</small>
+          </div>
+          <div class="statement-summary__item">
+            <span class="statement-summary__label">Débitos</span>
+            <strong class="amount--debit">−{{ (summary()?.debitTotal ?? 0) | brl }}</strong>
+            <small>{{ summary()?.debitCount ?? 0 }} lançamentos</small>
+          </div>
+          <div class="statement-summary__item">
+            <span class="statement-summary__label">Resultado do período</span>
+            <strong
+              [class.amount--credit]="periodResult() >= 0"
+              [class.amount--debit]="periodResult() < 0"
+              >{{ periodResult() | brl }}</strong
+            >
+            <small>créditos menos débitos</small>
+          </div>
+        </div>
+
         @switch (status()) {
           @case ('loading') {
             <div class="rows" role="status" aria-label="Carregando extrato">
@@ -115,7 +162,11 @@
               <div class="state">
                 <p class="state__title"><app-icon name="history" />Nenhum lançamento encontrado</p>
                 <p class="state__text">
-                  {{ hasFilters() ? 'Nenhum lançamento corresponde aos filtros escolhidos.' : 'Os lançamentos aparecem aqui conforme forem registrados.' }}
+                  {{
+                    hasFilters()
+                      ? 'Nenhum lançamento corresponde aos filtros escolhidos.'
+                      : 'Os lançamentos aparecem aqui conforme forem registrados.'
+                  }}
                 </p>
                 @if (hasFilters()) {
                   <button matButton="filled" (click)="clearFilters()">Limpar filtros</button>
@@ -134,6 +185,7 @@
                       <th scope="col">Tipo</th>
                       <th scope="col" class="table__number">Valor</th>
                       <th scope="col" class="table__number">Saldo Após</th>
+                      <th scope="col">Registrado em</th>
                       <th scope="col">Referência</th>
                     </tr>
                   </thead>
@@ -157,6 +209,7 @@
                           {{ item.type === 'CREDIT' ? '+' : '−' }}{{ item.amount | brl }}
                         </td>
                         <td class="table__number">{{ item.balanceAfter | brl }}</td>
+                        <td class="date-cell">{{ item.recordedAt | dateTimeBr }}</td>
                         <td class="identifier" [title]="item.eventId">{{ item.eventId | shortId }}</td>
                       </tr>
                     }
@@ -198,7 +251,7 @@
           </div>
           <div class="info-grid__item">
             <dt>Saldo atual</dt>
-            <dd class="amount--credit">{{ account()?.balance ?? 0 | brl }}</dd>
+            <dd class="amount--credit">{{ (account()?.balance ?? 0) | brl }}</dd>
           </div>
           <div class="info-grid__item">
             <dt>Criada em</dt>

@@ -13,7 +13,7 @@ public sealed class GetStatementUseCase(
     private const int MaxPageSize = 100;
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
 
-    public async Task<PagedResult<TransactionDto>> GetStatementAsync(
+    public async Task<StatementDto> GetStatementAsync(
         GetStatementQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -24,7 +24,7 @@ public sealed class GetStatementUseCase(
         var filter = new StatementFilter(query.Type, query.From, query.To);
 
         var cacheKey = await BuildCacheKeyAsync(query.AccountId, page, pageSize, filter, cancellationToken);
-        var cached = await cache.GetAsync<PagedResult<TransactionDto>>(cacheKey, cancellationToken);
+        var cached = await cache.GetAsync<StatementDto>(cacheKey, cancellationToken);
 
         if (cached is not null)
         {
@@ -34,12 +34,15 @@ public sealed class GetStatementUseCase(
         var skip = (page - 1) * pageSize;
         var pageItems = await transactions.GetPageAsync(query.AccountId, filter, skip, pageSize, cancellationToken);
         var totalItems = await transactions.CountByAccountIdAsync(query.AccountId, filter, cancellationToken);
+        var summary = await transactions.SummarizeAsync(query.AccountId, filter, cancellationToken);
 
-        var result = new PagedResult<TransactionDto>(
-            pageItems.Select(TransactionDto.From).ToList(),
-            page,
-            pageSize,
-            totalItems);
+        var result = new StatementDto(
+            new PagedResult<TransactionDto>(
+                pageItems.Select(TransactionDto.From).ToList(),
+                page,
+                pageSize,
+                totalItems),
+            summary);
 
         await cache.SetAsync(cacheKey, result, CacheDuration, cancellationToken);
 

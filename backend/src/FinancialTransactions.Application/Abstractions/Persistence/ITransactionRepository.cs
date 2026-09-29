@@ -1,3 +1,4 @@
+using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Domain.Entities;
 
 namespace FinancialTransactions.Application.Abstractions.Persistence;
@@ -18,6 +19,11 @@ public interface ITransactionRepository
         CancellationToken cancellationToken = default);
 
     Task<int> CountByAccountIdAsync(
+        Guid accountId,
+        StatementFilter filter,
+        CancellationToken cancellationToken = default);
+
+    Task<StatementSummaryDto> SummarizeAsync(
         Guid accountId,
         StatementFilter filter,
         CancellationToken cancellationToken = default);

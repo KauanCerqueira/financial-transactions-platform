@@ -1,7 +1,6 @@
 import { createAction, props } from '@ngrx/store';
-import { PagedResult } from '../../../core/models/paged-result';
+import { Statement } from '../../../core/models/statement';
 import { StatementFilters } from '../../../core/models/statement-filters';
-import { Transaction } from '../../../core/models/transaction';
 
 export const loadStatement = createAction(
   '[Statement] Load',
@@ -9,6 +8,6 @@ export const loadStatement = createAction(
 );
 export const loadStatementSuccess = createAction(
   '[Statement] Load success',
-  props<{ result: PagedResult<Transaction> }>(),
+  props<{ result: Statement }>(),
 );
 export const loadStatementFailure = createAction('[Statement] Load failure', props<{ error: string }>());

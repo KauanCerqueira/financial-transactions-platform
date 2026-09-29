@@ -11,6 +11,8 @@ export const selectStatementPageSize = createSelector(selectStatementState, (sta
 
 export const selectStatementTotalItems = createSelector(selectStatementState, (state) => state.totalItems);
 
+export const selectStatementSummary = createSelector(selectStatementState, (state) => state.summary);
+
 export const selectStatementStatus = createSelector(selectStatementState, (state) => state.status);
 
 export const selectStatementError = createSelector(selectStatementState, (state) => state.error);

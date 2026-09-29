@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Account } from '../models/account';
 import { AccountsSummary } from '../models/accounts-summary';
 import { PagedResult } from '../models/paged-result';
+import { Statement } from '../models/statement';
 import { StatementFilters } from '../models/statement-filters';
 import { Transaction } from '../models/transaction';
 
@@ -24,7 +25,7 @@ export class AccountsApi {
     page: number,
     pageSize: number,
     filters: StatementFilters = {},
-  ): Observable<PagedResult<Transaction>> {
+  ): Observable<Statement> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     if (filters.type) {
@@ -39,6 +40,6 @@ export class AccountsApi {
       params = params.set('to', filters.to);
     }
 
-    return this.http.get<PagedResult<Transaction>>(`/api/accounts/${accountId}/transactions`, { params });
+    return this.http.get<Statement>(`/api/accounts/${accountId}/transactions`, { params });
   }
 }

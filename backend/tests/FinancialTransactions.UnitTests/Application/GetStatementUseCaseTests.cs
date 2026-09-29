@@ -1,5 +1,6 @@
 using FluentAssertions;
 using FinancialTransactions.Application.Abstractions.Persistence;
+using FinancialTransactions.Application.Dtos;
 using FinancialTransactions.Application.Exceptions;
 using FinancialTransactions.Application.Features.Transactions;
 using FinancialTransactions.Domain.Entities;
@@ -37,21 +38,21 @@ public sealed class GetStatementUseCaseTests
     }
 
     [Fact]
-    public async Task GetStatementAsync_WhenAccountExists_ReturnsPagedResultWithItems()
+    public async Task GetStatementAsync_WhenAccountExists_ReturnsPageAndSummary()
     {
         var accountId = Guid.NewGuid();
-        var transaction = BuildTransaction(accountId);
 
-        SetUpExistingAccountWithOneTransaction(accountId, transaction);
+        SetUpExistingAccountWithOneTransaction(accountId, BuildTransaction(accountId));
 
         var result = await _useCase.GetStatementAsync(new GetStatementQuery(accountId, 1, 20));
 
-        result.Items.Should().ContainSingle();
-        result.Items[0].BalanceAfter.Should().Be(100m);
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(20);
-        result.TotalItems.Should().Be(1);
-        result.TotalPages.Should().Be(1);
+        result.Page.Items.Should().ContainSingle();
+        result.Page.Items[0].BalanceAfter.Should().Be(100m);
+        result.Page.Page.Should().Be(1);
+        result.Page.PageSize.Should().Be(20);
+        result.Page.TotalItems.Should().Be(1);
+        result.Page.TotalPages.Should().Be(1);
+        result.Summary.CreditTotal.Should().Be(100m);
     }
 
     [Fact]
@@ -90,6 +91,12 @@ public sealed class GetStatementUseCaseTests
                 20,
                 It.IsAny<CancellationToken>()),
             Times.Once);
+        _transactions.Verify(
+            repository => repository.SummarizeAsync(
+                accountId,
+                It.Is<StatementFilter>(filter => filter.Type == TransactionType.Debit),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -97,9 +104,7 @@ public sealed class GetStatementUseCaseTests
     {
         var accountId = Guid.NewGuid();
 
-        _accounts
-            .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Account.Create(accountId, "Ana", Money.Zero, Now));
+        SetUpAccount(accountId);
         _transactions
             .Setup(repository => repository.GetPageAsync(
                 accountId, It.IsAny<StatementFilter>(), 0, 100, It.IsAny<CancellationToken>()))
@@ -108,11 +113,12 @@ public sealed class GetStatementUseCaseTests
             .Setup(repository => repository.CountByAccountIdAsync(
                 accountId, It.IsAny<StatementFilter>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
+        SetUpSummarize(accountId);
 
         var result = await _useCase.GetStatementAsync(new GetStatementQuery(accountId, 0, 1000));
 
-        result.Page.Should().Be(1);
-        result.PageSize.Should().Be(100);
+        result.Page.Page.Should().Be(1);
+        result.Page.PageSize.Should().Be(100);
         _transactions.Verify(
             repository => repository.GetPageAsync(
                 accountId, It.IsAny<StatementFilter>(), 0, 100, It.IsAny<CancellationToken>()),
@@ -121,9 +127,7 @@ public sealed class GetStatementUseCaseTests
 
     private void SetUpExistingAccountWithOneTransaction(Guid accountId, Transaction transaction)
     {
-        _accounts
-            .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Account.Create(accountId, "Ana", Money.Zero, Now));
+        SetUpAccount(accountId);
         _transactions
             .Setup(repository => repository.GetPageAsync(
                 accountId, It.IsAny<StatementFilter>(), 0, 20, It.IsAny<CancellationToken>()))
@@ -132,7 +136,19 @@ public sealed class GetStatementUseCaseTests
             .Setup(repository => repository.CountByAccountIdAsync(
                 accountId, It.IsAny<StatementFilter>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+        SetUpSummarize(accountId);
     }
+
+    private void SetUpAccount(Guid accountId) =>
+        _accounts
+            .Setup(repository => repository.GetByIdAsync(accountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Account.Create(accountId, "Ana", Money.Zero, Now));
+
+    private void SetUpSummarize(Guid accountId) =>
+        _transactions
+            .Setup(repository => repository.SummarizeAsync(
+                accountId, It.IsAny<StatementFilter>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new StatementSummaryDto(1, 100m, 0, 0m));
 
     private static Transaction BuildTransaction(Guid accountId)
     {
