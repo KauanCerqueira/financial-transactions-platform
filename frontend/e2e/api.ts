@@ -24,9 +24,8 @@ interface DemoAccount {
   movements: Movement[];
 }
 
-// Mesmos dados de demonstração usados nos prints (frontend/scripts/capture-screenshots.mjs).
-// O primeiro lançamento é a abertura da conta, com a data mais antiga, para o saldo após
-// cada lançamento seguir a ordem do extrato.
+// Dados de demonstração usados pelos testes ponta a ponta: o primeiro lançamento é a abertura
+// da conta, com a data mais antiga, para o saldo após cada lançamento seguir o extrato.
 export const demoAccounts: DemoAccount[] = [
   {
     holderName: 'Helena Ribeiro',
@@ -89,21 +88,21 @@ async function accessToken(): Promise<string> {
   return body.access_token;
 }
 
-// A aplicação sobe vazia: os testes provisionam o próprio cenário, uma única vez.
+// Os testes provisionam o próprio cenário. É idempotente por titular: rodar de novo não duplica,
+// e contas criadas na mão (ou por outro teste) não atrapalham.
 export async function ensureDemoData(): Promise<void> {
   const context = await request.newContext();
   const headers = { Authorization: `Bearer ${await accessToken()}` };
 
   try {
     const accounts = (await (await context.get(`${apiUrl}/accounts`, { headers })).json()) as Account[];
-
-    if (accounts.length > 0) {
-      return;
-    }
-
     const now = Date.now();
 
     for (const account of demoAccounts) {
+      if (accounts.some((existing) => existing.holderName === account.holderName)) {
+        continue;
+      }
+
       const created = (await (
         await context.post(`${apiUrl}/accounts`, {
           headers,

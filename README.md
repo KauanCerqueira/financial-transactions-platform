@@ -39,9 +39,7 @@ O enunciado que originou o projeto está em
 |---|
 | ![Saldo insuficiente](docs/prints/06-saldo-insuficiente.png) |
 
-> Os prints são gerados pelo próprio projeto, com `npm run prints` (Playwright), a partir da aplicação
-> em execução — se o banco estiver vazio, o script cria o cenário de demonstração pela API. Assim as
-> imagens nunca ficam desatualizadas.
+> Telas da aplicação em execução.
 
 ---
 
@@ -56,8 +54,7 @@ docker compose up --build
 Abra **http://localhost:4200** e entre com **`operador` / `operador123`**.
 
 A aplicação sobe **vazia**, sem dados de demonstração: a primeira conta é criada na própria interface,
-em **Nova Conta**. Para ver o sistema com dados, o `npm run prints` cria um cenário de demonstração
-pela própria API quando o banco está vazio — é o caminho usado nas imagens deste README.
+em **Nova Conta**.
 
 | Serviço | Endereço | Observação |
 |---|---|---|
@@ -223,7 +220,6 @@ backend/
    └─ FinancialTransactions.IntegrationTests API com PostgreSQL e RabbitMQ reais
 frontend/
 ├─ e2e/         testes ponta a ponta (Playwright)
-├─ scripts/     geração dos prints do README
 └─ src/app/     core, shared e features (contas, extrato e transações)
 infra/keycloak/ realm, tema de login (themes/fraga) e usuário de demonstração
 docs/           prints usados neste README e o enunciado do desafio

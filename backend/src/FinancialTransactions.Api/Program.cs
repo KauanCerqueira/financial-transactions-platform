@@ -135,12 +135,15 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseSerilogRequestLogging();
+
+// A documentação (Swagger) fica pública; a API continua protegida pela política
+// de autenticação (fallback) aplicada aos controllers.
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseSwagger();
-app.UseSwaggerUI();
 
 app.MapControllers();
 
